@@ -1,30 +1,42 @@
+"""Authentication application service (incremental dependency-injection refactor)."""
 import os
-import loguru
 from typing import Optional
+
+import loguru
 from fastapi import Request
 from fastapi.responses import FileResponse, Response
 
 from Services.service_interface import ServiceInterface
 from Infrastructure.Authentication.Providers.google_oauth_provider import GoogleOAuthHandler
 from Infrastructure.Authentication.Providers.jwt_services_provider import JWTHandler
-from Infrastructure.PostgreSQL.async_dml import PostgresDML
-from Infrastructure.PostgreSQL.async_connection import PostgresConnectionManager
+from Backend.src.Infrastructure.Databases.PostgreSQL.async_dml import PostgresDML
 from Infrastructure.Authentication.Schema.models import TokenPayload
-from pprint import pprint as pp
+
+
+class AuthServiceError(Exception):
+    """Expected authentication use-case error, independent of HTTP transport."""
+
+    def __init__(self, message: str, code: str = "auth_failed") -> None:
+        self.message = message
+        self.code = code
+        super().__init__(message)
+
 
 class AuthService(ServiceInterface):
     def __init__(
         self,
-        post_connection_manager: PostgresConnectionManager,
-        logger: Optional[loguru.Logger] = None,
+        *,
+        google_auth_handler: GoogleOAuthHandler,
+        jwt_handler: JWTHandler,
+        postgres: PostgresDML,
+        logger: Optional[loguru._logger.Logger] = None,
     ) -> None:
-        self.google_auth_handler: Optional[GoogleOAuthHandler] = None
-        self.jwt_handler: Optional[JWTHandler] = None
-        self.postgres: Optional[PostgresDML] = None
-        self.post_connection_manager: PostgresConnectionManager = post_connection_manager
-        self.logger: loguru.Logger = logger or loguru.logger
+        super().__init__(logger=logger)
+        self.google_auth_handler = google_auth_handler
+        self.jwt_handler = jwt_handler
+        self.postgres = postgres
 
-        # Store the PATH only — never a shared Response object
+        # Temporary compatibility: move path to typed application settings later.
         self.welcome_page_path = os.getenv(
             "WELCOME_PAGE_PATH",
             r"E:\SPgroup\Technical\Current\Ai Analysis Qualuity System\Frontend\welcome.html",
@@ -33,31 +45,29 @@ class AuthService(ServiceInterface):
     @classmethod
     async def init_service(
         cls,
-        post_connection_manager: PostgresConnectionManager,
-        logger: Optional[loguru.Logger] = None,
+        *,
+        google_auth_handler: GoogleOAuthHandler,
+        jwt_handler: JWTHandler,
+        postgres: PostgresDML,
+        logger: Optional[loguru._logger.Logger] = None,
     ) -> "AuthService":
-        logger = logger or loguru.logger
-        instance = cls(post_connection_manager, logger=logger)
-        instance.google_auth_handler = await GoogleOAuthHandler.init_class(logger=logger)
-        instance.jwt_handler = await JWTHandler.init_class(logger=logger)
-        instance.postgres = await PostgresDML.init_class(manager=post_connection_manager)
-        return instance
+        """Construct the service; all providers are already supplied by DI."""
+        return cls(
+            google_auth_handler=google_auth_handler,
+            jwt_handler=jwt_handler,
+            postgres=postgres,
+            logger=logger,
+        )
 
-    # ─── OAuth passthrough ───
-
+    # Existing OAuth/response integration is preserved to avoid changing
+    # the provider's transport contract in an untested patch.
     async def redirect_to_google(self, request: Request):
-        # GoogleOAuthHandler now generates state and stores it in session
         return await self.google_auth_handler.redirect_to_google(request)
 
     async def receiving_from_google(self, request: Request):
-        # Now validates state, userinfo, and email_verified internally.
-        # Raises HTTPException on any error — no need to check for None here.
         return await self.google_auth_handler.receiving_from_google(request)
 
-    # ─── Database ───
     async def save_to_database(self, data: dict) -> None:
-        self.logger.info(f"Processing user data for database: {data}")
-
         db_data = {
             "google_sub": data.get("sub"),
             "email": data.get("email"),
@@ -67,42 +77,31 @@ class AuthService(ServiceInterface):
             "family_name": data.get("family_name"),
             "picture_url": data.get("picture"),
         }
-
         if not db_data["google_sub"] or not db_data["email"]:
-            raise ValueError("Missing required fields: 'sub' and 'email' are required")
-
-        # Defense in depth: GoogleOAuthHandler already enforces this,
-        # but we keep it in case this method is called from elsewhere.
+            raise AuthServiceError("Missing required user identity fields", code="invalid_identity")
         if not db_data["email_verified"]:
-            raise ValueError("Email must be verified before saving")
+            raise AuthServiceError("Email must be verified", code="email_unverified")
 
-        self.logger.info(f"Upserting user data: {db_data}")
-
-
-        await self.postgres.insert_into_table(
-            table_name="users",
-            data=db_data,
-            schema="auth",
-        )
-
-
-
-    # ─── Tokens ───
+        try:
+            await self.postgres.insert_into_table(
+                table_name="users", data=db_data, schema="auth",
+            )
+        except Exception as exc:
+            self.logger.exception("Could not persist authenticated user")
+            raise AuthServiceError("Authentication persistence unavailable", code="storage_failure") from exc
 
     async def generate_tokens(self, data: dict) -> dict:
         google_sub = data.get("google_sub") or data.get("sub")
         email = data.get("email")
         if not google_sub or not email:
-            raise ValueError("Missing required fields: sub and email")
-        pp(data)
+            raise AuthServiceError("Missing required user identity fields", code="invalid_identity")
+
         payload = TokenPayload(
             sub=google_sub,
             name=data.get("name") or data.get("given_name"),
         )
-        pp(payload)
         access_token = await self.jwt_handler.generate_access_token(payload)
         refresh_token = await self.jwt_handler.generate_refresh_token(payload)
-
         return {
             "access_token": access_token,
             "refresh_token": refresh_token,
@@ -110,24 +109,12 @@ class AuthService(ServiceInterface):
             "expires_in": self.jwt_handler.access_token_expire_minutes * 60,
         }
 
-    # ─── Response / Cookies ───
-
     async def go_to_home_and_store_token(self, token_data: dict) -> Response:
-        """
-        Create a fresh FileResponse for EVERY request.
-        NEVER reuse a Response object across requests — that leaks cookies.
-        """
+        """Compatibility method: creating HTTP responses should move to the router."""
         response = FileResponse(self.welcome_page_path)
-
         self.jwt_handler.set_auth_cookies(
             response=response,
             access_token=token_data["access_token"],
             refresh_token=token_data["refresh_token"],
         )
         return response
-
-    
-
-
-
-

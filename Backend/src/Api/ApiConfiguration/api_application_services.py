@@ -5,9 +5,9 @@ import loguru
 from Api.ApiConfiguration.api_settings import ApplicationBasicSettings
 
 # All imports at top
-from Infrastructure.Mongodb import MongoConnectionManager
-from Infrastructure.PostgreSQL import PostgresConnectionManager
-from Infrastructure.Redis.async_connection import RedisConnectionManager
+from Backend.src.Infrastructure.Databases.Mongodb import MongoConnectionManager
+from Backend.src.Infrastructure.Databases.PostgreSQL import PostgresConnectionManager
+from Backend.src.Infrastructure.Databases.Redis.async_connection import RedisConnectionManager
 # from qdrant_client import AsyncQdrantClient
 from LLM.Embedding import EmbeddingFactory, EmbeddingConfig
 from LLM.Generation import GenerationFactory, GenerationConfig
