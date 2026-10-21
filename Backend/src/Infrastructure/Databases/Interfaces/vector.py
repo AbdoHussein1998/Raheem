@@ -1,42 +1,34 @@
-# src/DatabaseInfrastructure/Vector/Schema/vector_document.py
+"""Validated vector document DTO without model inheritance."""
+from __future__ import annotations
+from typing import Any
+from pydantic import ConfigDict, Field, TypeAdapter
+from pydantic.dataclasses import dataclass
 
-from pydantic import BaseModel, Field
-from typing import Optional, Dict, Any, List
 
+@dataclass(config=ConfigDict(json_schema_extra={
+    "example": {
+        "id": "db-generated-id-123",
+        "content": "A sample document",
+        "vector": [0.1, 0.2],
+        "payload": {"source": "web"},
+        "score": 0.95,
+    }
+}))
+class VectorDocument:
+    """Vector content plus metadata, validated by Pydantic."""
+    content: str = Field(description="Document text")
+    vector: list[float] = Field(description="Embedding values")
+    id: str | None = Field(default=None, description="Optional document ID")
+    payload: dict[str, Any] = Field(default_factory=dict)
+    score: float | None = None
 
-class VectorDocument(BaseModel):
-    id: Optional[str] = Field(
-        default=None,
-        description=(
-            "Document ID as string. "
-            "On insert: optional — if None, the provider generates one. "
-            "On retrieval: always populated from the database (cast to str)."
-        ),
-    )
-    content: str = Field(
-        ...,
-        description="Text content of the document",
-    )
-    vector: List[float] = Field(
-        ...,
-        description="Embedding vector",
-    )
-    payload: Dict[str, Any] = Field(
-        default_factory=dict,
-        description="Additional metadata",
-    )
-    score: Optional[float] = Field(
-        default=None,
-        description="Similarity score — populated only on search results",
-    )
+    def model_dump(self, *, exclude: set[str] | None = None) -> dict[str, Any]:
+        return TypeAdapter(type(self)).dump_python(self, exclude=exclude)
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "id": "db-generated-id-123",
-                "content": "This is a sample document",
-                "vector": [0.1, 0.2, 0.3],
-                "payload": {"source": "web", "page": 1},
-                "score": 0.95,
-            }
-        }
+    @classmethod
+    def model_validate(cls, payload: dict[str, Any]) -> "VectorDocument":
+        return TypeAdapter(cls).validate_python(payload)
+
+    @classmethod
+    def model_json_schema(cls) -> dict[str, Any]:
+        return TypeAdapter(cls).json_schema()

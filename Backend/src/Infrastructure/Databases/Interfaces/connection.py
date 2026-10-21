@@ -1,22 +1,20 @@
-from abc import ABC, abstractmethod
+"""Legacy interface documentation only; concrete implementations use composition.
+
+Kept for external-import compatibility, but not inherited by infrastructure classes.
+"""
 
 
-class ConnectionManagerInterface(ABC):
+class ConnectionManagerInterface:
 
     @classmethod
-    @abstractmethod
     async def init_class(cls):
         pass
 
-    @abstractmethod
     async def connect(self):
         pass
-    @abstractmethod
     async def disconnect(self):
         pass
-    @abstractmethod
     async def reconnect(self):
         pass
-    @abstractmethod
     async def ensure_connected(self):
         pass

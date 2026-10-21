@@ -1,23 +1,17 @@
 import asyncio
 import time
 from typing import Any, Callable, Optional
-from functools import wraps
-from DatabaseInfrastructure.Interfaces.connection import ConnectionManagerInterface
+from .utility import retry
+from redis.exceptions import ConnectionError as RedisConnectionError, TimeoutError as RedisTimeoutError
 import redis.asyncio as redis
 import loguru
-from redis.exceptions import ConnectionError as RedisConnectionError, TimeoutError as RedisTimeoutError
-from functools import wraps
 
 
 # Retryable errors for the @retry decorator
-RETRYABLE_ERRORS = (
-    RedisConnectionError,
-    RedisTimeoutError,
-    OSError,
-)
 
 
-class RedisConnectionManager(ConnectionManagerInterface):
+
+class RedisConnectionManager:
     """
     Production-grade async Redis connection manager using redis-py async.
 
@@ -97,7 +91,7 @@ class RedisConnectionManager(ConnectionManagerInterface):
             **kwargs: Extra connection parameters.
 
         Returns:
-            RedisConnectionManager: Initialized instance (NOT yet connected).
+            RedisConnectionManager: Initialized and connectivity-verified instance.
 
         Raises:
             Exception: If initialization fails.
@@ -113,6 +107,8 @@ class RedisConnectionManager(ConnectionManagerInterface):
                 **kwargs,
             )
             
+            if not await instance.connect():
+                raise ConnectionError("Redis connection initialization failed")
             return instance
         except Exception as e:
             loguru.logger.error(f"Failed to initialize RedisConnectionManager: {e}")
@@ -132,7 +128,10 @@ class RedisConnectionManager(ConnectionManagerInterface):
                 f"connect_timeout={self.connect_timeout_ms}ms"
             )
 
-            self.client = redis.Redis.from_url(
+            if self.client is not None:
+                return await self.ensure_connected()
+
+            candidate = redis.Redis.from_url(
                 self.redis_url,
                 max_connections=self.max_pool_size,
                 socket_connect_timeout=self.connect_timeout_ms / 1000,
@@ -142,10 +141,15 @@ class RedisConnectionManager(ConnectionManagerInterface):
                 socket_keepalive=True,
             )
 
-            await self.client.ping()
+            try:
+                await candidate.ping()
+            except Exception:
+                await candidate.aclose()
+                raise
+            self.client = candidate
             self._last_health_check = time.monotonic()
 
-            self.logger.success(f"Connected to Redis | url={self.redis_url}")
+            self.logger.success("Connected to Redis")
             return True
 
         except RedisConnectionError as e:
@@ -166,8 +170,8 @@ class RedisConnectionManager(ConnectionManagerInterface):
             bool: True on success or if already disconnected.
         """
         try:
-            if self.client:
-                await self.client.close()
+            if self.client is not None:
+                await self.client.aclose()
                 self.client = None
                 self._last_health_check = 0.0
                 self.logger.info("Disconnected from Redis")
@@ -212,7 +216,7 @@ class RedisConnectionManager(ConnectionManagerInterface):
             await self.client.ping()
             self._last_health_check = now
             return True
-        except (RedisConnectionError, Exception) as e:
+        except Exception as e:
             self.logger.warning(
                 f"Health check failed ({type(e).__name__}), reconnecting..."
             )
@@ -229,90 +233,5 @@ class RedisConnectionManager(ConnectionManagerInterface):
         await self.disconnect()
         return False
 
-    @staticmethod
-    def retry(
-        max_attempts: int = 3,
-        base_delay: float = 0.1,
-        max_delay: float = 5.0,
-        backoff_factor: float = 2.0,
-        exceptions: tuple = RETRYABLE_ERRORS,
-    ) -> Callable:
-        """
-        Retry decorator for async methods with exponential backoff.
-
-        Retries on transient errors (network, timeouts, auto-reconnects).
-        Does NOT retry on programming errors.
-
-        Between retries, attempts to reconnect via `self.conn.reconnect()`
-        (for DDL/DML classes) or `self.reconnect()` (for ConnectionManager itself).
-
-        Args:
-            max_attempts (int): Maximum retry attempts. Default 3.
-            base_delay (float): Initial delay in seconds. Default 0.1.
-            max_delay (float): Cap for exponential delay. Default 5.0.
-            backoff_factor (float): Multiplier for delay. Default 2.0.
-            exceptions (tuple): Exception types to retry. Default retryable errors.
-
-        Returns:
-            Callable: Decorator function.
-        """
-
-        def decorator(func: Callable) -> Callable:
-            @wraps(func)
-            async def wrapper(self, *args, **kwargs):
-                conn = getattr(self, "conn", None) or self
-                delay = base_delay
-                last_exception = None
-
-                for attempt in range(1, max_attempts + 1):
-                    try:
-                        return await func(self, *args, **kwargs)
-
-                    except exceptions as e:
-                        last_exception = e
-
-                        if attempt == max_attempts:
-                            self.logger.error(
-                                f"[retry] {func.__name__} FAILED after "
-                                f"{max_attempts} attempts | {type(e).__name__}: {e}"
-                            )
-                            raise
-
-                        self.logger.warning(
-                            f"[retry] {func.__name__} attempt "
-                            f"{attempt}/{max_attempts} failed: {type(e).__name__}. "
-                            f"Retrying in {delay:.2f}s..."
-                        )
-
-                        # Try to reconnect before next attempt
-                        try:
-                            await conn.reconnect()
-                        except Exception as reconnect_err:
-                            self.logger.warning(
-                                f"[retry] reconnect failed: "
-                                f"{type(reconnect_err).__name__}: {reconnect_err}"
-                            )
-
-                        await asyncio.sleep(delay)
-                        delay = min(delay * backoff_factor, max_delay)
-
-                    except Exception as e:
-                        # Non-retryable error - re-raise immediately
-                        self.logger.error(
-                            f"Non-retryable error in {func.__name__}: "
-                            f"{type(e).__name__}: {e}",
-                            exc_info=True,
-                        )
-                        raise
-
-                # Safety net (should never reach here)
-                raise last_exception  # pragma: no cover
-
-            return wrapper
-
-        return decorator
     
-
-retry=RedisConnectionManager.retry
-
 

@@ -1,14 +1,7 @@
-#src/Dependencies/welcome_dependency.py
-
-from Raheem.src.Services.Services.welcome_service import WelcomeService
+"""Keep this factory callable from Celery without a FastAPI request."""
 import loguru
+from Services.Services.welcome_service import WelcomeService
 
 
-async def get_welcome_service()->WelcomeService:
-
-    logger=loguru.logger
-    return await WelcomeService.init_service(logger=logger)
-
-
-
-
+async def get_welcome_service() -> WelcomeService:
+    return await WelcomeService.init_service(logger=loguru.logger)

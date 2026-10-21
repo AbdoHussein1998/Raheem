@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+
+<html dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<meta content="web_standard" name="shell-type"/>
+<title> رحيم </title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=Noto+Serif:wght@400;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+    @layer base {
+      html, body { margin: 0; padding: 0; }
+      body { overscroll-behavior: none; }
+      main > :first-child { margin-top: 0 !important; }
+      main > :last-child { margin-bottom: 0 !important; }
+    }
+    ::-webkit-scrollbar { display: none; }
+  </style>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-primary-fixed": "#002117",
+            "inverse-surface": "#263143",
+            "surface": "#f9f9ff",
+            "error": "#ba1a1a",
+            "on-primary-container": "#79a292",
+            "on-error-container": "#93000a",
+            "on-surface": "#111c2d",
+            "surface-container": "#e7eeff",
+            "on-secondary-container": "#78603e",
+            "surface-container-highest": "#d8e3fb",
+            "on-tertiary-fixed": "#2f1500",
+            "surface-variant": "#d8e3fb",
+            "on-tertiary": "#ffffff",
+            "on-secondary": "#ffffff",
+            "error-container": "#ffdad6",
+            "surface-container-low": "#f0f3ff",
+            "primary-fixed": "#c1ecda",
+            "secondary-fixed": "#fedeb2",
+            "primary-fixed-dim": "#a6d0be",
+            "on-secondary-fixed": "#281800",
+            "outline": "#717975",
+            "background": "#f9f9ff",
+            "inverse-on-surface": "#ecf1ff",
+            "surface-dim": "#cfdaf2",
+            "surface-bright": "#f9f9ff",
+            "on-background": "#111c2d",
+            "surface-container-high": "#dee8ff",
+            "tertiary": "#301600",
+            "on-primary-fixed-variant": "#274e41",
+            "on-primary": "#ffffff",
+            "on-error": "#ffffff",
+            "surface-tint": "#3f6658",
+            "tertiary-fixed-dim": "#ffb77d",
+            "secondary-container": "#fedeb2",
+            "on-tertiary-container": "#e48015",
+            "secondary": "#725b38",
+            "inverse-primary": "#a6d0be",
+            "outline-variant": "#c1c8c3",
+            "on-surface-variant": "#414845",
+            "secondary-fixed-dim": "#e0c298",
+            "on-tertiary-fixed-variant": "#6e3900",
+            "tertiary-fixed": "#ffdcc3",
+            "primary-container": "#0f382c",
+            "primary": "#002218",
+            "on-secondary-fixed-variant": "#584323",
+            "surface-container-lowest": "#ffffff",
+            "tertiary-container": "#4f2700"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-lg": "2rem",
+            "space-md": "1.25rem",
+            "gutter": "1.5rem",
+            "margin": "2.5rem",
+            "margin-mobile": "1.25rem",
+            "gutter-mobile": "1rem",
+            "space-sm": "0.75rem",
+            "space-xl": "3.25rem",
+            "space-xs": "0.375rem"
+          },
+          "fontFamily": {
+            "headline-md": ["IBM Plex Sans", "sans-serif"],
+            "display-lg": ["Noto Serif", "serif"],
+            "body-md": ["IBM Plex Sans", "sans-serif"],
+            "display-lg-mobile": ["Noto Serif", "serif"],
+            "scripture-quote-mobile": ["Noto Serif", "serif"],
+            "label-md": ["IBM Plex Sans", "sans-serif"],
+            "label-sm": ["IBM Plex Sans", "sans-serif"],
+            "body-lg": ["IBM Plex Sans", "sans-serif"],
+            "headline-lg": ["IBM Plex Sans", "sans-serif"],
+            "scripture-quote": ["Noto Serif", "serif"],
+            "body-sm": ["IBM Plex Sans", "sans-serif"],
+            "headline-sm": ["IBM Plex Sans", "sans-serif"]
+          },
+          "fontSize": {
+            "headline-md": ["22px", { "lineHeight": "36px", "fontWeight": "600" }],
+            "display-lg": ["40px", { "lineHeight": "62px", "fontWeight": "700" }],
+            "body-md": ["16px", { "lineHeight": "28px", "fontWeight": "400" }],
+            "display-lg-mobile": ["28px", { "lineHeight": "44px", "fontWeight": "700" }],
+            "scripture-quote-mobile": ["20px", { "lineHeight": "40px", "fontWeight": "400" }],
+            "label-md": ["13px", { "lineHeight": "20px", "fontWeight": "500" }],
+            "label-sm": ["11px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600" }],
+            "body-lg": ["18px", { "lineHeight": "32px", "fontWeight": "400" }],
+            "headline-lg": ["28px", { "lineHeight": "44px", "fontWeight": "700" }],
+            "scripture-quote": ["24px", { "lineHeight": "50px", "fontWeight": "400" }],
+            "body-sm": ["14px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "headline-sm": ["18px", { "lineHeight": "28px", "fontWeight": "600" }]
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-surface font-body-md text-body-md text-on-surface antialiased min-h-screen selection:bg-secondary-fixed selection:text-on-secondary-fixed flex flex-col justify-between">
+<!-- Header -->
+<header class="fixed top-0 w-full z-50 bg-surface/90 backdrop-blur-xl border-b border-surface-container-high/60 shadow-[0_1px_8px_rgba(0,0,0,0.03)]">
+<div class="h-20 max-w-7xl mx-auto px-margin-mobile lg:px-margin flex items-center justify-between gap-space-md">
+<!-- Brand Logo & Identity -->
+<a class="flex items-center gap-space-sm group" href="#">
+<div class="relative flex items-center justify-center">
+<img alt="شعار من حب الله دل عليه" class="w-10 h-10 rounded-full object-cover ring-2 ring-primary/10 group-hover:ring-surface-tint transition-all" src="https://lh3.googleusercontent.com/aida/AEtjO1XEoBj7efuEEZpKQCvYqGfS1_fCb_Al87OW_34WH_NaMxB5zKK476iwgqSmV93_WT47nEWcoaO1MLPVyeIHNrF08EVnQtLN6uzPfkFtFnnrIrdyFNL8myTGwwEghOm2N2-Zez3TH8tam9QBJ2dv-1A0q45rpLMMKxBD29ehNEwsUNDtpKLv28ejf2a99uhZPx3PpgyTHJQgPuEUwqqXY4caq1U_cLYxXv9ILoWWRPFt"/>
+</div>
+<div class="flex flex-col text-right">
+<span class="font-headline-sm text-headline-sm text-primary font-bold tracking-tight">من حب الله دل عليه</span>
+<span class="font-label-sm text-label-sm text-secondary hidden sm:inline-block">دليلك إلى طريق المعرفة واليقين</span>
+</div>
+</a>
+<!-- Gateway Primary Nav Links -->
+<nav class="hidden lg:flex items-center gap-1.5" data-active-classes="bg-primary-container text-on-primary font-semibold rounded-lg">
+<a class="px-space-sm py-space-xs rounded-lg text-body-sm text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" href="#">الرئيسية</a>
+<a class="px-space-sm py-space-xs rounded-lg text-body-sm text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" href="#gateways">بوابات المعرفة</a>
+<a class="px-space-sm py-space-xs rounded-lg text-body-sm text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" href="#lessons">الدروس المنهجية</a>
+<a class="px-space-sm py-space-xs rounded-lg text-body-sm text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" href="#raheem">اسأل رحيم</a>
+<a class="px-space-sm py-space-xs rounded-lg text-body-sm text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" href="#consultation">الاستشارات</a>
+<a class="px-space-sm py-space-xs rounded-lg text-body-sm text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" href="#endowment">الوقف والدعم</a>
+</nav>
+<!-- Utility Actions -->
+<div class="flex items-center gap-space-xs">
+<button aria-label="البحث" class="flex items-center gap-space-xs h-10 px-3.5 rounded-full bg-surface-container-low text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors border border-outline-variant/30" type="button">
+<span class="material-symbols-outlined text-[19px]">search</span>
+<span class="hidden md:inline font-label-sm text-label-sm bg-surface-container-lowest px-1.5 py-0.5 rounded text-outline border border-outline-variant/40">Ctrl + K</span>
+</button>
+<button aria-label="التنبيهات" class="relative w-10 h-10 rounded-full flex items-center justify-center bg-surface-container-low text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors border border-outline-variant/30" type="button">
+<span class="material-symbols-outlined text-[20px]">notifications</span>
+<span class="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-secondary ring-2 ring-surface"></span>
+</button>
+<button aria-label="تبديل المظهر" class="w-10 h-10 rounded-full flex items-center justify-center bg-surface-container-low text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors border border-outline-variant/30" type="button">
+<span class="material-symbols-outlined text-[20px]">dark_mode</span>
+</button>
+</div>
+</div>
+</header>
+<!-- Main Content -->
+<main class="w-full pt-20 flex-grow"><div class="flex flex-col w-full">
+<!-- Interactive Chat Sanctuary Canvas -->
+<div class="w-full max-w-7xl mx-auto px-margin-mobile lg:px-margin py-space-sm flex flex-col gap-space-md">
+<!-- Top Breadcrumb & Status Deck -->
+<div class="flex flex-wrap items-center justify-between gap-space-sm bg-surface-container-low/70 backdrop-blur-md px-space-md py-space-xs rounded-xl shadow-sm">
+<div class="flex items-center gap-space-xs text-on-surface-variant font-body-sm text-body-sm">
+<a class="hover:text-primary transition-colors flex items-center gap-1" href="#">
+<span class="material-symbols-outlined text-[18px]">home</span>
+<span>الرئيسية</span>
+</a>
+<span class="text-outline-variant font-bold">/</span>
+<a class="hover:text-primary transition-colors" href="#gateways">البوابات المعرفية</a>
+<span class="text-outline-variant font-bold">/</span>
+<span class="text-primary font-semibold flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          اسأل رحيم (المرشد الذكي المؤصل)
+        </span>
+</div>
+<div class="flex items-center gap-space-xs">
+<span class="bg-secondary-container/40 text-on-secondary-container px-2.5 py-0.5 rounded-full font-label-sm text-label-sm font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">verified</span>
+          نموذج التحقيق: معتمد من الهيئة العلمية v2.4
+        </span>
+<div class="hidden sm:flex items-center gap-1 bg-surface-container-lowest px-2 py-0.5 rounded-md text-outline font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[15px] text-surface-tint">memory</span>
+          زمن التحقيق: 0.42 ثانية
+        </div>
+</div>
+</div>
+<!-- Main Workspace Grid: Sidebar + Chat Stream + Side Scholar Drawer -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-space-md items-start relative min-h-[760px]">
+<!-- ============================================== -->
+<!-- 1. LEFT / RIGHT RTL SIDEBAR: SESSIONS & ARCHIVE -->
+<!-- ============================================== -->
+<aside class="lg:col-span-3 flex flex-col gap-space-sm bg-surface-container-lowest rounded-xl p-space-sm shadow-sm h-full max-h-[820px] overflow-hidden">
+<!-- Action: New Contemplative Session -->
+<button class="w-full flex items-center justify-center gap-2 bg-primary text-on-primary py-space-sm px-space-md rounded-lg font-headline-sm text-headline-sm hover:bg-primary-container transition-all active:scale-[0.98] shadow-md group" type="button">
+<span class="material-symbols-outlined text-[20px] group-hover:rotate-90 transition-transform">add_circle</span>
+<span>جلسة تدبر جديدة</span>
+</button>
+<!-- Search Bar Inside Sessions -->
+<div class="relative w-full">
+<span class="material-symbols-outlined absolute right-3 top-2.5 text-outline text-[18px]">search</span>
+<input class="w-full bg-surface-container-low text-on-surface placeholder:text-outline text-body-sm font-body-sm rounded-lg pr-9 pl-3 py-2 outline-none focus:bg-surface focus:shadow-[0_0_0_2px_rgba(15,56,44,0.12)] transition-all" placeholder="البحث في المسائل السابقة..." type="text"/>
+</div>
+<!-- Scrollable Conversation Groups -->
+<div class="flex-1 overflow-y-auto space-y-space-sm pr-1">
+<!-- Group: Today -->
+<div class="space-y-1">
+<div class="flex items-center justify-between px-2 py-1 text-outline font-label-sm text-label-sm uppercase tracking-wider">
+<span>اليوم</span>
+<span class="bg-surface-container text-on-surface-variant px-1.5 py-0.2 rounded-full text-[10px]">2 جلسة</span>
+</div>
+<!-- Active Session Card -->
+<div class="group relative flex items-center justify-between p-2.5 rounded-lg bg-primary-container text-on-primary cursor-pointer shadow-sm">
+<div class="flex items-center gap-2 overflow-hidden">
+<span class="material-symbols-outlined text-[18px] text-primary-fixed shrink-0" style="font-variation-settings: 'FILL' 1;">chat_bubble</span>
+<span class="font-body-sm text-body-sm font-medium truncate">الجمع بين الرجاء ومجاهدة الفتور</span>
+</div>
+<div class="flex items-center gap-1 opacity-90 shrink-0">
+<button class="p-1 hover:text-secondary-fixed transition-colors" title="خيارات الجلسة">
+<span class="material-symbols-outlined text-[16px]">more_vert</span>
+</button>
+</div>
+</div>
+<!-- Session 2 -->
+<div class="flex items-center justify-between p-2.5 rounded-lg text-on-surface hover:bg-surface-container-low cursor-pointer transition-colors group">
+<div class="flex items-center gap-2 overflow-hidden">
+<span class="material-symbols-outlined text-[18px] text-outline group-hover:text-primary transition-colors">chat_bubble_outline</span>
+<span class="font-body-sm text-body-sm truncate">تحقيق معنى: من حب الله دل عليه</span>
+</div>
+<span class="font-label-sm text-label-sm text-outline hidden group-hover:inline">منذ 3 س</span>
+</div>
+</div>
+<!-- Group: Yesterday -->
+<div class="space-y-1 pt-1">
+<div class="px-2 py-1 text-outline font-label-sm text-label-sm uppercase tracking-wider">
+<span>أمس</span>
+</div>
+<div class="flex items-center justify-between p-2.5 rounded-lg text-on-surface hover:bg-surface-container-low cursor-pointer transition-colors group">
+<div class="flex items-center gap-2 overflow-hidden">
+<span class="material-symbols-outlined text-[18px] text-outline group-hover:text-primary transition-colors">menu_book</span>
+<span class="font-body-sm text-body-sm truncate">أدوية فتور القلب في مدارج السالكين</span>
+</div>
+<span class="font-label-sm text-label-sm text-outline hidden group-hover:inline">أمس</span>
+</div>
+<div class="flex items-center justify-between p-2.5 rounded-lg text-on-surface hover:bg-surface-container-low cursor-pointer transition-colors group">
+<div class="flex items-center gap-2 overflow-hidden">
+<span class="material-symbols-outlined text-[18px] text-outline group-hover:text-primary transition-colors">auto_stories</span>
+<span class="font-body-sm text-body-sm truncate">تخريج حديث: احفظ الله يحفظك سلوكياً</span>
+</div>
+</div>
+</div>
+<!-- Group: Last Week -->
+<div class="space-y-1 pt-1">
+<div class="px-2 py-1 text-outline font-label-sm text-label-sm uppercase tracking-wider">
+<span>الأسبوع الماضي</span>
+</div>
+<div class="flex items-center justify-between p-2.5 rounded-lg text-on-surface hover:bg-surface-container-low cursor-pointer transition-colors group">
+<div class="flex items-center gap-2 overflow-hidden">
+<span class="material-symbols-outlined text-[18px] text-outline group-hover:text-primary transition-colors">psychology</span>
+<span class="font-body-sm text-body-sm truncate">مسألة الجمع بين الرجاء والخوف</span>
+</div>
+</div>
+<div class="flex items-center justify-between p-2.5 rounded-lg text-on-surface hover:bg-surface-container-low cursor-pointer transition-colors group">
+<div class="flex items-center gap-2 overflow-hidden">
+<span class="material-symbols-outlined text-[18px] text-outline group-hover:text-primary transition-colors">favorite</span>
+<span class="font-body-sm text-body-sm truncate">أسرار اسم الله الودود والرحيم</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Sidebar Footer Action Deck -->
+<div class="pt-space-xs bg-surface-container-low/40 rounded-lg p-2 space-y-1">
+<button class="w-full flex items-center justify-between px-2.5 py-1.5 text-on-surface hover:text-primary hover:bg-surface-container rounded-md font-body-sm text-body-sm transition-colors">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] text-secondary">bookmark</span>
+<span>الكناش العلمي والمفضلة</span>
+</div>
+<span class="bg-secondary-container text-on-secondary-container px-1.5 py-0.2 rounded-full font-label-sm text-label-sm font-semibold">14</span>
+</button>
+<button class="w-full flex items-center justify-between px-2.5 py-1.5 text-on-surface hover:text-primary hover:bg-surface-container rounded-md font-body-sm text-body-sm transition-colors">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] text-surface-tint">picture_as_pdf</span>
+<span>تصدير الحوارات كـ PDF</span>
+</div>
+<span class="material-symbols-outlined text-[16px] text-outline">download</span>
+</button>
+<button class="w-full flex items-center justify-between px-2.5 py-1.5 text-on-surface hover:text-primary hover:bg-surface-container rounded-md font-body-sm text-body-sm transition-colors">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] text-outline">tune</span>
+<span>إعدادات المرشد الأصولية</span>
+</div>
+<span class="font-label-sm text-label-sm text-outline">موسع</span>
+</button>
+</div>
+</aside>
+<!-- ============================================== -->
+<!-- 2. CENTER: INTERACTIVE CHAT STREAM & INPUT -->
+<!-- ============================================== -->
+<main class="lg:col-span-6 flex flex-col bg-surface-container-lowest rounded-xl shadow-sm h-full max-h-[820px] overflow-hidden relative">
+<!-- Stream Header / Session Control Bar -->
+<header class="p-space-md bg-surface-container-low/50 backdrop-blur-sm flex items-center justify-between gap-space-sm">
+<div class="flex items-center gap-space-sm min-w-0">
+<div class="w-10 h-10 rounded-full bg-primary-container text-primary-fixed flex items-center justify-center shrink-0 shadow-sm">
+<span class="material-symbols-outlined text-[24px]">cognition</span>
+</div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-2">
+<h1 class="font-headline-sm text-headline-sm text-primary font-bold truncate">الجمع بين الرجاء ومجاهدة الفتور</h1>
+<span class="bg-primary-fixed/60 text-on-primary-fixed px-2 py-0.5 rounded text-[11px] font-semibold shrink-0">جلسة نشطة</span>
+</div>
+<p class="font-label-sm text-label-sm text-secondary truncate">تأصيل تحليلي وفق أمهات كتب التزكية والحديث الشريف</p>
+</div>
+</div>
+<!-- Utility Icons -->
+<div class="flex items-center gap-1 shrink-0">
+<button class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-surface-container text-on-surface-variant transition-colors" title="مشاركة المدارسة">
+<span class="material-symbols-outlined text-[18px]">share</span>
+</button>
+<button class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-surface-container text-on-surface-variant transition-colors" title="وضع القراءة الخاشعة الكاملة">
+<span class="material-symbols-outlined text-[18px]">fullscreen</span>
+</button>
+<button class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-surface-container text-on-surface-variant transition-colors" title="تفريغ المحادثة">
+<span class="material-symbols-outlined text-[18px]">delete_sweep</span>
+</button>
+</div>
+</header>
+<!-- Message Flow Viewport -->
+<div class="flex-1 overflow-y-auto p-space-md space-y-space-lg">
+<!-- Contemplation Timestamp Divider -->
+<div class="flex items-center justify-center gap-2">
+<div class="h-px bg-surface-container-high flex-1"></div>
+<span class="font-label-sm text-label-sm text-outline bg-surface-container-low px-3 py-0.5 rounded-full">اليوم • 14 رجب 1446 هـ</span>
+<div class="h-px bg-surface-container-high flex-1"></div>
+</div>
+<!-- USER MESSAGE -->
+<article class="flex flex-col items-end gap-1.5 pl-6 sm:pl-12">
+<div class="flex items-center gap-2 text-on-surface-variant font-label-sm text-label-sm mb-0.5">
+<span class="font-semibold text-primary">أحمد بن صالح (طالب علم)</span>
+<span>•</span>
+<span>10:24 ص</span>
+</div>
+<div class="bg-surface-container-high/60 text-on-surface p-space-md rounded-2xl rounded-tr-none shadow-sm max-w-2xl relative group">
+<p class="font-body-md text-body-md leading-relaxed text-right">
+                كيف يجمع السائر بين استشعار رحمة الله تعالى وسعة عفوه، وبين مجاهدة الخواطر ووساوس الفتور دون الوقوع في أمن مكر الله أو في القنوط؟ وما التوجيه النبوي المحكم في هذه المعادلة القلبية؟
+              </p>
+<!-- Quick User Edit / Copy Action -->
+<div class="absolute -bottom-3 left-3 hidden group-hover:flex items-center gap-1 bg-surface-container-lowest px-2 py-0.5 rounded-full shadow-md text-outline">
+<button class="hover:text-primary transition-colors" title="نسخ السؤال">
+<span class="material-symbols-outlined text-[15px]">content_copy</span>
+</button>
+<button class="hover:text-primary transition-colors" title="تعديل السؤال">
+<span class="material-symbols-outlined text-[15px]">edit</span>
+</button>
+</div>
+</div>
+</article>
+<!-- AI SCHOLAR MESSAGE («رحيم») -->
+<article class="flex flex-col items-start gap-2 pr-2 sm:pr-4">
+<!-- Persona Header Badge -->
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-full bg-primary-container text-secondary-fixed flex items-center justify-center ring-2 ring-secondary/20 shadow-sm">
+<span class="material-symbols-outlined text-[18px]">psychology_alt</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="font-headline-sm text-headline-sm text-primary font-bold">رحيم (المرشد المؤصل)</span>
+<span class="bg-secondary-container/30 text-on-secondary-container px-2 py-0.5 rounded font-label-sm text-label-sm font-semibold">تحقيق أصولي</span>
+</div>
+</div>
+<!-- Response Bubble / Elaborated Article -->
+<div class="bg-surface-container-low/50 text-on-surface p-space-md sm:p-space-lg rounded-2xl rounded-tl-none shadow-sm max-w-2xl space-y-space-md relative">
+<!-- Lead Greeting & Foundational Principle -->
+<p class="font-body-md text-body-md leading-relaxed">
+                الحمد لله، والصلاة والسلام على رسول الله. أخي السالك الكريم، هذا السؤال يلمس <span class="font-semibold text-primary">قطب رحى السلوك القلبي</span>، فإن سير القلب إلى الله محفوف بجناحين متوازنين: <strong class="text-secondary">الخوف والرجاء</strong>، ورأسهما محبة الله الدالة عليه.
+              </p>
+<!-- Quranic Verse Display Block -->
+<div class="bg-surface-container-lowest p-space-md rounded-xl shadow-sm border-r-4 border-r-secondary flex flex-col gap-2">
+<div class="flex items-center justify-between text-secondary font-label-sm text-label-sm">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">menu_book</span>
+                    محكم التنزيل - سورة الإسراء: 57
+                  </span>
+<span class="material-symbols-outlined text-[16px] text-outline">format_quote</span>
+</div>
+<p class="font-scripture-quote text-scripture-quote text-primary text-center py-1">
+                  ﴿ أُولَٰئِكَ الَّذِينَ يَدْعُونَ يَبْتَغُونَ إِلَىٰ رَبِّهِمُ الْوَسِيلَةَ أَيُّهُمْ أَقْرَبُ وَيَرْجُونَ رَحْمَتَهُ وَيَخَافُونَ عَذَابَهُ ۚ إِنَّ عَذَابَ رَبِّكَ كَانَ مَحْذُورًا ﴾
+                </p>
+</div>
+<!-- Structured Answer Sections -->
+<div class="space-y-space-sm pt-1">
+<h2 class="font-headline-sm text-headline-sm text-primary flex items-center gap-1.5 font-bold">
+<span class="w-1.5 h-4 bg-primary rounded-full"></span>
+                  أولاً: فقه حراسة الخواطر وعلاج وساوس الفتور
+                </h2>
+<p class="font-body-md text-body-md leading-relaxed">
+                  يقرر الإمام ابن القيم رحمه الله أن الخاطرة إذا لم تدفع صارت فكرة، فإن لم تدفع صارت شهوة، ثم إرادة، ثم فعلاً. ودفع الوساوس يكون بـ <span class="text-primary font-semibold">«الإعراض الكلي»</span> وعدم الاسترسال، لأن الشيطان إذا رأى السالك مناقشاً لوسواسه أمده بضروب أخرى من التشكيك والتثبيط 
+                  <a class="inline-flex items-center justify-center bg-secondary-fixed/50 hover:bg-secondary-fixed text-on-secondary-fixed text-[11px] font-bold px-1.5 py-0.2 rounded mx-1 align-baseline transition-colors" href="#citation-1" title="انظر المصدر: مدارج السالكين">[1]</a>.
+                </p>
+</div>
+<div class="space-y-space-sm">
+<h2 class="font-headline-sm text-headline-sm text-primary flex items-center gap-1.5 font-bold">
+<span class="w-1.5 h-4 bg-primary rounded-full"></span>
+                  ثانياً: التوجيه النبوي في الجمع والتوازن
+                </h2>
+<p class="font-body-md text-body-md leading-relaxed">
+                  تأمل وصية المصطفى ﷺ العميقة الجامعة لأصل التدرج والرجاء:
+                </p>
+<div class="bg-surface-container-high/40 p-space-sm rounded-lg text-primary font-medium text-body-md flex items-start gap-2">
+<span class="material-symbols-outlined text-secondary shrink-0 mt-1">format_quote</span>
+<div>
+                    «سَدِّدُوا وَقَارِبُوا، وَأَبْشِرُوا، وَاعْلَمُوا أَنَّهُ لَنْ يُدْخِلَ أَحَدًا مِنْكُمْ عَمَلُهُ الجَنَّةَ...»
+                    <span class="block text-outline font-label-sm text-label-sm mt-1">رواه البخاري ومسلم 
+                      <a class="bg-secondary-fixed/50 hover:bg-secondary-fixed text-on-secondary-fixed text-[11px] font-bold px-1.5 py-0.2 rounded mx-1 transition-colors" href="#citation-2">[2]</a>
+</span>
+</div>
+</div>
+<p class="font-body-md text-body-md leading-relaxed">
+                  فقوله <strong class="text-primary">«وَأَبْشِرُوا»</strong> في صلب الأمر بالتسديد والمقاربة هو الشاهد على غرس الرجاء الحامي من قنوط السائر عند عوارض الضعف والفتور.
+                </p>
+</div>
+<!-- Actionable Spiritual Prescriptions -->
+<div class="bg-surface-container-lowest p-space-md rounded-xl space-y-2 shadow-sm">
+<span class="font-headline-sm text-headline-sm text-primary font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-surface-tint">check_circle</span>
+                  الخلاصة الإرشادية لبرنامجك اليومي:
+                </span>
+<ul class="space-y-2 font-body-sm text-body-sm text-on-surface pr-4 list-disc marker:text-secondary">
+<li><strong>استصحب روح البشارة:</strong> اعلم أن مجرد انزعاجك من وسواس الفتور هو عين «صريح الإيمان» كما أفتى به النبي ﷺ صحابته.</li>
+<li><strong>قاعدة الورد المخفف:</strong> إذا اشتد الفتور فالزم الفرائض وأقل السنن الراتبة (حالة سد الذريعة)، ولا تنقطع كلياً فتنبتة النفس.</li>
+<li><strong>الالتجاء بأسماء التودد:</strong> اجعل وردك الليلة استحضار اسم الله <em>«الودود»</em> و <em>«التواب»</em>.</li>
+</ul>
+</div>
+<!-- Message Action Bar -->
+<div class="pt-space-xs flex flex-wrap items-center justify-between gap-2 border-t border-surface-container-high/60">
+<div class="flex items-center gap-1">
+<button class="p-1.5 rounded-lg text-on-surface-variant hover:text-primary hover:bg-surface-container transition-colors flex items-center gap-1 text-label-sm font-label-sm" title="نسخ الرد كاملاً">
+<span class="material-symbols-outlined text-[17px]">content_copy</span>
+<span>نسخ</span>
+</button>
+<button class="p-1.5 rounded-lg text-on-surface-variant hover:text-primary hover:bg-surface-container transition-colors flex items-center gap-1 text-label-sm font-label-sm" title="الاستماع الصوتي المرتل">
+<span class="material-symbols-outlined text-[17px]">volume_up</span>
+<span>استماع</span>
+</button>
+<button class="p-1.5 rounded-lg text-on-surface-variant hover:text-primary hover:bg-surface-container transition-colors flex items-center gap-1 text-label-sm font-label-sm" title="إعادة توليد وتوسيع">
+<span class="material-symbols-outlined text-[17px]">refresh</span>
+<span>توسيع</span>
+</button>
+<button class="p-1.5 rounded-lg text-on-surface-variant hover:text-secondary hover:bg-surface-container transition-colors flex items-center gap-1 text-label-sm font-label-sm" title="حفظ في الكناش">
+<span class="material-symbols-outlined text-[17px]">bookmark_add</span>
+<span>حفظ</span>
+</button>
+</div>
+<div class="flex items-center gap-1">
+<button class="p-1 rounded hover:bg-surface-container text-on-surface-variant hover:text-emerald-700 transition-colors" title="إجابة محررة ومحققة بدقة">
+<span class="material-symbols-outlined text-[18px]">thumb_up</span>
+</button>
+<button class="p-1 rounded hover:bg-surface-container text-on-surface-variant hover:text-rose-700 transition-colors" title="تحتاج مراجعة أو تصحيح">
+<span class="material-symbols-outlined text-[18px]">thumb_down</span>
+</button>
+<button class="p-1.5 rounded-lg bg-surface-container text-primary hover:bg-surface-container-high transition-colors font-label-sm text-label-sm flex items-center gap-1" title="تصميم بطاقة اقتباس للنشر">
+<span class="material-symbols-outlined text-[15px]">style</span>
+<span>بطاقة دعوية</span>
+</button>
+</div>
+</div>
+</div>
+</article>
+<!-- Follow-up Prompt Suggestion Chips -->
+<div class="space-y-2 pt-2 pr-12">
+<span class="font-label-sm text-label-sm text-outline flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">tips_and_updates</span>
+              مقترحات استكمال المدارسة والتدبر:
+            </span>
+<div class="flex flex-wrap gap-2">
+<button class="bg-surface-container-low hover:bg-surface-container text-primary font-body-sm text-body-sm px-3 py-1.5 rounded-full transition-colors flex items-center gap-1.5 shadow-sm">
+<span>وضح لي تطبيق ذلك عملياً في قيام الليل</span>
+<span class="material-symbols-outlined text-[16px] text-secondary">arrow_back</span>
+</button>
+<button class="bg-surface-container-low hover:bg-surface-container text-primary font-body-sm text-body-sm px-3 py-1.5 rounded-full transition-colors flex items-center gap-1.5 shadow-sm">
+<span>ما الفرق بين الخاطرة والوسواس عند الغزالي؟</span>
+<span class="material-symbols-outlined text-[16px] text-secondary">arrow_back</span>
+</button>
+<button class="bg-surface-container-low hover:bg-surface-container text-primary font-body-sm text-body-sm px-3 py-1.5 rounded-full transition-colors flex items-center gap-1.5 shadow-sm">
+<span>أرشدني لدرس مرئي في المنصة يطابق هذه المسألة</span>
+<span class="material-symbols-outlined text-[16px] text-surface-tint">videocam</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Sticky Interactive Prompt Input Box -->
+<div class="p-space-sm sm:p-space-md bg-surface-container-lowest border-t border-surface-container-high/60 shadow-lg">
+<!-- Mode Switcher Pill Tabs -->
+<div class="flex items-center justify-between gap-2 mb-2">
+<div class="flex items-center gap-1 bg-surface-container-low p-1 rounded-lg">
+<button class="px-2.5 py-1 rounded-md bg-surface-container-lowest font-label-sm text-label-sm font-semibold text-primary shadow-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">auto_stories</span>
+                تدبر وتزكية
+              </button>
+<button class="px-2.5 py-1 rounded-md font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">menu_book</span>
+                تحقيق علمي موسع
+              </button>
+<button class="px-2.5 py-1 rounded-md font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">flash_on</span>
+                خلاصة عملية سريعة
+              </button>
+</div>
+<div class="hidden sm:flex items-center gap-1 text-outline font-label-sm text-label-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+<span>رحيم جاهز للمدارسة</span>
+</div>
+</div>
+<!-- Input Container -->
+<div class="relative bg-surface-container-low rounded-xl p-2 focus-within:bg-surface-container-lowest focus-within:shadow-[0_0_0_2px_rgba(15,56,44,0.18)] transition-all">
+<textarea class="w-full bg-transparent text-on-surface placeholder:text-outline text-body-md font-body-md outline-none resize-none p-1.5 leading-relaxed" placeholder="اطرح تساؤلك، مسألتك المنهجية، أو استفسارك حول الآيات والأحاديث والسلوك..." rows="2"></textarea>
+<div class="flex items-center justify-between pt-1">
+<!-- Attachments & Media Options -->
+<div class="flex items-center gap-1">
+<button class="w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container hover:text-primary transition-colors" title="إرفاق وثيقة أو مخطوطة للتحليل" type="button">
+<span class="material-symbols-outlined text-[20px]">attach_file</span>
+</button>
+<button class="w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container hover:text-primary transition-colors" title="تسجيل صوتي وتفريغ مباشر" type="button">
+<span class="material-symbols-outlined text-[20px]">mic</span>
+</button>
+<button class="w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container hover:text-primary transition-colors" title="استعراض أمهات المصادر المحددة" type="button">
+<span class="material-symbols-outlined text-[20px]">library_books</span>
+</button>
+</div>
+<!-- Submit Button -->
+<button class="flex items-center gap-1.5 bg-primary text-on-primary px-4 py-2 rounded-lg font-headline-sm text-headline-sm hover:bg-primary-container active:scale-95 transition-all shadow-md" type="button">
+<span>إرسال</span>
+<span class="material-symbols-outlined text-[18px] rotate-180">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- Bottom Assurance Note -->
+<p class="text-center font-label-sm text-label-sm text-outline mt-2">
+            يستند «رحيم» إلى نصوص محققة وموثقة من كبار أئمة الأمة، وتظل الفتوى القضائية أو الحالات الخاصة خاضعة لقسم الاستشارات المباشرة.
+          </p>
+</div>
+</main>
+<!-- ============================================== -->
+<!-- 3. RIGHT / LEFT DRAWER: SCHOLAR SOURCES & CONTEXT -->
+<!-- ============================================== -->
+<aside class="lg:col-span-3 flex flex-col gap-space-md h-full max-h-[820px] overflow-y-auto">
+<!-- Live Academic Citations Card -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm space-y-space-sm" id="citations-panel">
+<div class="flex items-center justify-between">
+<h2 class="font-headline-sm text-headline-sm text-primary font-bold flex items-center gap-1.5">
+<span class="material-symbols-outlined text-secondary text-[20px]">source</span>
+              المصادر المعتمدة في الرد
+            </h2>
+<span class="bg-secondary-container/40 text-on-secondary-container px-2 py-0.5 rounded font-label-sm text-label-sm font-semibold">2 إحالة موثقة</span>
+</div>
+<div class="space-y-space-xs pt-1">
+<!-- Citation 1 -->
+<div class="bg-surface-container-low p-2.5 rounded-lg space-y-1 hover:bg-surface-container transition-colors" id="citation-1">
+<div class="flex items-center justify-between text-primary font-label-sm text-label-sm">
+<span class="font-bold flex items-center gap-1">
+<span class="w-4 h-4 rounded-full bg-secondary text-on-secondary flex items-center justify-center text-[10px]">1</span>
+                  مدارج السالكين بين منازل إياك نعبد
+                </span>
+<span class="text-secondary font-semibold">ج1 • ص94</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant line-clamp-2">
+                فصل منازل إياك نعبد وإياك نستعين: «منزلة الرجاء هي حادية القلوب إلى بلاد المحبوب، وبها يطيب السير».
+              </p>
+<div class="flex items-center justify-between pt-1 text-[11px] text-surface-tint">
+<span>تحقيق: دار الصميعي</span>
+<a class="hover:underline flex items-center gap-0.5" href="#">
+<span>فتح المخطوط</span>
+<span class="material-symbols-outlined text-[13px]">open_in_new</span>
+</a>
+</div>
+</div>
+<!-- Citation 2 -->
+<div class="bg-surface-container-low p-2.5 rounded-lg space-y-1 hover:bg-surface-container transition-colors" id="citation-2">
+<div class="flex items-center justify-between text-primary font-label-sm text-label-sm">
+<span class="font-bold flex items-center gap-1">
+<span class="w-4 h-4 rounded-full bg-secondary text-on-secondary flex items-center justify-center text-[10px]">2</span>
+                  صحيح الإمام مسلم
+                </span>
+<span class="text-secondary font-semibold">كتاب صفة القيامة • ح2816</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant line-clamp-2">
+                باب لن يدخل أحد الجنة بعمله بل برحمة الله وفضله، وتوجيه الجمع بين البشارة والعمل.
+              </p>
+<div class="flex items-center justify-between pt-1 text-[11px] text-surface-tint">
+<span>إسناد صحيح متصل</span>
+<a class="hover:underline flex items-center gap-0.5" href="#">
+<span>تخريج الحديث</span>
+<span class="material-symbols-outlined text-[13px]">open_in_new</span>
+</a>
+</div>
+</div>
+</div>
+</div>
+<!-- Curated Learning Hub Connection -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm space-y-space-sm">
+<div class="flex items-center justify-between">
+<h2 class="font-headline-sm text-headline-sm text-primary font-bold flex items-center gap-1.5">
+<span class="material-symbols-outlined text-surface-tint text-[20px]">play_lesson</span>
+              درس منهجي مرتبط
+            </h2>
+<span class="font-label-sm text-label-sm text-outline">منصة العلم</span>
+</div>
+<div class="bg-surface-container-low rounded-lg overflow-hidden group cursor-pointer">
+<div class="relative h-28 w-full bg-cover bg-center" data-alt="An artistic cinematic close-up of an open classical leather-bound Arabic manuscript with golden calligraphy ornaments on a wooden scholar table under soft golden sunlight rays" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDvbn1_ydCxF3zyfEldG6P22ibbQh7o4yY3Gu4CKzMOpWzjkDqucBykNAIr_V-Qr5uw4apHU96AXyP4_tdPiXfjqpSXVhjLPHPF40Z68fM4DMHsagLCGiCHO8jk_4Qc02bI1z2z8ywkYwd0EJOuW9a6drCH1xovUV7N7MtmqSYoQPt8x3k_B1bPjjCNaxuroXm778nmlArsv36WfgfKSmtqS4EXrtLLoS9tGr05bUw')">
+<div class="absolute inset-0 bg-primary/40 flex items-center justify-center group-hover:bg-primary/30 transition-colors">
+<div class="w-10 h-10 rounded-full bg-surface/90 text-primary flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-[24px]">play_arrow</span>
+</div>
+</div>
+<span class="absolute bottom-2 left-2 bg-primary/80 text-on-primary font-label-sm text-label-sm px-1.5 py-0.5 rounded">24 دقيقة</span>
+</div>
+<div class="p-2.5 space-y-1">
+<h3 class="font-headline-sm text-headline-sm text-primary font-bold group-hover:text-surface-tint transition-colors">
+                قواعد تزكية النفس وحراسة واردات القلب
+              </h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+                فضيلة الشيخ د. عبد الرحمن الشهري • سلسلة معارج السلوك (الدرس 4)
+              </p>
+</div>
+</div>
+</div>
+<!-- Scholar Verification Council Seal -->
+<div class="bg-gradient-to-br from-primary-container to-primary text-on-primary p-space-md rounded-xl shadow-md space-y-space-xs relative overflow-hidden">
+<div class="absolute -bottom-6 -left-6 w-24 h-24 rounded-full bg-secondary/10 blur-xl"></div>
+<div class="flex items-center gap-2 text-secondary-fixed font-headline-sm text-headline-sm font-bold">
+<span class="material-symbols-outlined text-[22px]">verified_user</span>
+<span>الأمانة العلمية للمنصة</span>
+</div>
+<p class="font-body-sm text-body-sm text-primary-fixed-dim leading-relaxed">
+            تتم مراجعة وتدقيق خوارزميات الاستنباط دورياً عبر <strong>اللجنة العلمية العليا لمنصة «من حب الله دل عليه»</strong> لضمان سلامة الاستدلال وصون التراث من التشويه الرقمي.
+          </p>
+<a class="inline-flex items-center gap-1 text-secondary-fixed font-label-sm text-label-sm font-semibold hover:underline pt-1" href="#">
+<span>اطلع على وثيقة التأصيل الشرعي</span>
+<span class="material-symbols-outlined text-[14px]">arrow_back</span>
+</a>
+</div>
+</aside>
+</div>
+<!-- Bottom Feature Showcase Banner: Authentic Heritage Integration -->
+<section class="mt-space-sm bg-surface-container-lowest rounded-xl p-space-md shadow-sm">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-space-md">
+<div class="flex items-start gap-3">
+<div class="w-10 h-10 rounded-lg bg-surface-container-low text-primary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[22px]">library_books</span>
+</div>
+<div>
+<h4 class="font-headline-sm text-headline-sm text-primary font-bold mb-1">توثيق بالصفحة والطبعة</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+              لا يقتصر «رحيم» على التوليد الإنشائي، بل يربط كل فكرة بنصها الأصلي في كتب السلف المعتمدة.
+            </p>
+</div>
+</div>
+<div class="flex items-start gap-3">
+<div class="w-10 h-10 rounded-lg bg-surface-container-low text-secondary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[22px]">balance</span>
+</div>
+<div>
+<h4 class="font-headline-sm text-headline-sm text-primary font-bold mb-1">منهج التوسط والجمع</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+              مبني على أصول أهل السنة والجماعة، جامعاً بين رقائق السلوك وفق فقه الدليل بلا إفراط أو تفريط.
+            </p>
+</div>
+</div>
+<div class="flex items-start gap-3">
+<div class="w-10 h-10 rounded-lg bg-surface-container-low text-surface-tint flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[22px]">lock</span>
+</div>
+<div>
+<h4 class="font-headline-sm text-headline-sm text-primary font-bold mb-1">خصوصية تدبرية كاملة</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+              جلساتك ومسائلك الخاصة مشفرة تماماً ولا يتم استخدام أسئلتك الشخصية في تدريب النماذج العامة.
+            </p>
+</div>
+</div>
+</div>
+</section>
+</div>
+</div></main>
+<!-- Mobile Bottom Nav Dock (Small Screens Only) -->
+<nav class="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-surface/95 backdrop-blur-xl border-t border-surface-container-high h-16 flex items-center justify-around px-space-xs shadow-[0_-2px_12px_rgba(0,0,0,0.06)]">
+<a class="flex flex-col items-center gap-0.5 text-on-surface-variant hover:text-on-surface" href="#">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">grid_view</span>
+<span class="font-label-sm text-label-sm">البوابات</span>
+</a>
+<a class="flex flex-col items-center gap-0.5 text-on-surface-variant hover:text-on-surface" href="#lessons">
+<span class="material-symbols-outlined text-[20px]">menu_book</span>
+<span class="font-label-sm text-label-sm">الدروس</span>
+</a>
+<a class="flex flex-col items-center gap-0.5 text-on-surface-variant hover:text-on-surface" href="#raheem">
+<span class="material-symbols-outlined text-[20px]">smart_toy</span>
+<span class="font-label-sm text-label-sm">اسأل رحيم</span>
+</a>
+<a class="flex flex-col items-center gap-0.5 text-on-surface-variant hover:text-on-surface" href="#consultation">
+<span class="material-symbols-outlined text-[20px]">support_agent</span>
+<span class="font-label-sm text-label-sm">استشارة</span>
+</a>
+<a class="flex flex-col items-center gap-0.5 text-secondary hover:text-primary" href="#endowment">
+<span class="material-symbols-outlined text-[20px]">volunteer_activism</span>
+<span class="font-label-sm text-label-sm">الوقف</span>
+</a>
+</nav>
+<!-- Footer -->
+<footer class="w-full bg-surface-container-low text-on-surface border-t border-surface-container-high/60 py-space-lg mb-16 lg:mb-0">
+<div class="max-w-7xl mx-auto px-margin-mobile lg:px-margin flex flex-col md:flex-row items-center justify-between gap-space-md text-center md:text-right">
+<div>
+<div class="flex items-center justify-center md:justify-start gap-2 mb-1">
+<span class="font-headline-sm text-headline-sm text-primary font-bold">من حب الله دل عليه</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+          منصة إسلامية معرفية تعنى بالبصيرة والتزكية ورعاية الفكر الراشد بنقاء وأصالة.
+        </p>
+</div>
+<div class="flex flex-wrap justify-center gap-space-md font-body-sm text-body-sm text-on-surface-variant">
+<a class="hover:text-primary transition-colors" href="#">سياسة الخصوصية</a>
+<a class="hover:text-primary transition-colors" href="#">الهيئة العلمية</a>
+<a class="hover:text-primary transition-colors" href="#">توثيق المصادر</a>
+<a class="hover:text-primary transition-colors" href="#">تواصل معنا</a>
+</div>
+<div class="font-label-md text-label-md text-outline">
+<p class="">© 1446 هـ - 2025 م. جميع الحقوق محفوظة لمنصة من حب الله دل عليه.</p>
+</div>
+</div>
+</footer>
+</body></html>

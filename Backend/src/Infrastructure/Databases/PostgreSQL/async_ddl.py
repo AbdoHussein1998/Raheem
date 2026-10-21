@@ -17,15 +17,16 @@ broken for string defaults and an injection point.
 from __future__ import annotations
 
 from typing import Any, Optional, Type, Union
+import loguru
 
 from sqlalchemy import TextClause, text
 from sqlalchemy.ext.asyncio import AsyncEngine
 
-from .async_connection import PostgresConnectionManager,retry
-from .post_utility import (
+from .async_connection import PostgresConnectionManager
+from .utility import retry, PostgresUtility
+from .utility import (
     PG_TO_PY,
     PY_TO_PG,
-    PostgresComponentBase,
     render_default_literal,
     validate_identifier,
     validate_pg_type_literal,
@@ -34,7 +35,7 @@ from .post_utility import (
 _VALID_FK_ACTIONS = {"NO ACTION", "RESTRICT", "CASCADE", "SET NULL", "SET DEFAULT"}
 
 
-class PostgresDDL(PostgresComponentBase):
+class PostgresDDL:
     """
     Async PostgreSQL Data Definition Module.
     """
@@ -44,7 +45,8 @@ class PostgresDDL(PostgresComponentBase):
         manager: PostgresConnectionManager,
         logger: Optional[Any] = None,
     ) -> None:
-        super().__init__(manager, logger)
+        self._manager = manager
+        self.logger = logger if logger is not None else loguru.logger
         self.logger.info("PostgresDDL initialized")
 
 
@@ -150,9 +152,10 @@ class PostgresDDL(PostgresComponentBase):
                 return False
 
             create_stmt = text(f'CREATE DATABASE "{db_name}"')
-            self.debug_statement(create_stmt, operation="CREATE DATABASE", table_name=db_name, log_params=False)
+            PostgresUtility.debug_statement(self.logger, create_stmt, operation="CREATE DATABASE", table_name=db_name, log_params=False)
 
-            async with temp_engine.begin() as conn:
+            async with temp_engine.connect() as conn:
+                await conn.execution_options(isolation_level="AUTOCOMMIT")
                 await conn.execute(create_stmt)
 
             self.logger.info(f"Database '{db_name}' created successfully")
@@ -187,15 +190,16 @@ class PostgresDDL(PostgresComponentBase):
                 WHERE datname = :db_name AND pid <> pg_backend_pid()
                 """
             )
-            self.debug_statement(terminate_stmt, operation="TERMINATE CONNECTIONS", table_name=db_name)
+            PostgresUtility.debug_statement(self.logger, terminate_stmt, operation="TERMINATE CONNECTIONS", table_name=db_name)
 
             async with temp_engine.begin() as conn:
                 await conn.execute(terminate_stmt, {"db_name": db_name})
 
             drop_stmt = text(f'DROP DATABASE IF EXISTS "{db_name}"')
-            self.debug_statement(drop_stmt, operation="DROP DATABASE", table_name=db_name, log_params=False)
+            PostgresUtility.debug_statement(self.logger, drop_stmt, operation="DROP DATABASE", table_name=db_name, log_params=False)
 
-            async with temp_engine.begin() as conn:
+            async with temp_engine.connect() as conn:
+                await conn.execution_options(isolation_level="AUTOCOMMIT")
                 await conn.execute(drop_stmt)
 
             self.logger.info(f"Database '{db_name}' dropped successfully")
@@ -220,7 +224,7 @@ class PostgresDDL(PostgresComponentBase):
         """
         validate_identifier(schema_name, label="schema_name")
         stmt = text(f'CREATE SCHEMA IF NOT EXISTS "{schema_name}"')
-        self.debug_statement(stmt, operation="CREATE SCHEMA", table_name=schema_name, log_params=False)
+        PostgresUtility.debug_statement(self.logger, stmt, operation="CREATE SCHEMA", table_name=schema_name, log_params=False)
         await self._execute_ddl(stmt)
         self.logger.info(f"Schema '{schema_name}' ensured")
         return True
@@ -234,7 +238,7 @@ class PostgresDDL(PostgresComponentBase):
         validate_identifier(schema_name, label="schema_name")
         cascade_str = "CASCADE" if cascade else ""
         stmt = text(f'DROP SCHEMA IF EXISTS "{schema_name}" {cascade_str}')
-        self.debug_statement(stmt, operation="DROP SCHEMA", table_name=schema_name, log_params=False)
+        PostgresUtility.debug_statement(self.logger, stmt, operation="DROP SCHEMA", table_name=schema_name, log_params=False)
         await self._execute_ddl(stmt)
         self.logger.info(f"Schema '{schema_name}' dropped (cascade={cascade})")
         return True
@@ -259,7 +263,7 @@ class PostgresDDL(PostgresComponentBase):
             f'"{pk_name}" BIGSERIAL PRIMARY KEY'
             f')'
         )
-        self.debug_statement(
+        PostgresUtility.debug_statement(self.logger, 
             stmt,
             operation="CREATE TABLE",
             table_name=f"{schema_name}.{table_name}",
@@ -274,7 +278,7 @@ class PostgresDDL(PostgresComponentBase):
         validate_identifier(schema_name, label="schema_name")
         validate_identifier(table_name, label="table_name")
         stmt = text(f'DROP TABLE IF EXISTS "{schema_name}"."{table_name}"')
-        self.debug_statement(
+        PostgresUtility.debug_statement(self.logger, 
             stmt,
             operation="DROP TABLE",
             table_name=f"{schema_name}.{table_name}",
@@ -310,7 +314,7 @@ class PostgresDDL(PostgresComponentBase):
             f'ALTER TABLE "{schema_name}"."{table_name}" '
             f'ADD COLUMN IF NOT EXISTS "{column_name}" {pg_type} {default_str} {nullable_str}'
         )
-        self.debug_statement(
+        PostgresUtility.debug_statement(self.logger, 
             stmt,
             operation="ADD COLUMN",
             table_name=f"{schema_name}.{table_name}",
@@ -329,7 +333,7 @@ class PostgresDDL(PostgresComponentBase):
             f'ALTER TABLE "{schema_name}"."{table_name}" '
             f'DROP COLUMN IF EXISTS "{column_name}"'
         )
-        self.debug_statement(
+        PostgresUtility.debug_statement(self.logger, 
             stmt,
             operation="DROP COLUMN",
             table_name=f"{schema_name}.{table_name}",
@@ -370,7 +374,7 @@ class PostgresDDL(PostgresComponentBase):
             f'ALTER TABLE "{schema_name}"."{table_name}" '
             f'ALTER COLUMN "{column_name}" SET NOT NULL'
         )
-        self.debug_statement(
+        PostgresUtility.debug_statement(self.logger, 
             stmt,
             operation=f"SET NOT NULL [{constraint_name}]",
             table_name=f"{schema_name}.{table_name}",
@@ -397,7 +401,7 @@ class PostgresDDL(PostgresComponentBase):
             f'ALTER TABLE "{schema_name}"."{table_name}" '
             f'ALTER COLUMN "{column_name}" DROP NOT NULL'
         )
-        self.debug_statement(
+        PostgresUtility.debug_statement(self.logger, 
             stmt,
             operation="DROP NOT NULL",
             table_name=f"{schema_name}.{table_name}",
@@ -431,7 +435,7 @@ class PostgresDDL(PostgresComponentBase):
             f'ALTER TABLE "{schema_name}"."{table_name}" '
             f'ADD CONSTRAINT "{constraint_name}" UNIQUE ("{column_name}")'
         )
-        self.debug_statement(
+        PostgresUtility.debug_statement(self.logger, 
             stmt,
             operation="ADD UNIQUE",
             table_name=f"{schema_name}.{table_name}",
@@ -468,7 +472,7 @@ class PostgresDDL(PostgresComponentBase):
             f'ALTER TABLE "{schema_name}"."{table_name}" '
             f'ADD CONSTRAINT "{constraint_name}" PRIMARY KEY ("{column_name}")'
         )
-        self.debug_statement(
+        PostgresUtility.debug_statement(self.logger, 
             stmt,
             operation="ADD PRIMARY KEY",
             table_name=f"{schema_name}.{table_name}",
@@ -528,7 +532,7 @@ class PostgresDDL(PostgresComponentBase):
             f'REFERENCES "{references_schema}"."{references_table}" ("{references_column}") '
             f'ON DELETE {on_delete_norm} ON UPDATE {on_update_norm}'
         )
-        self.debug_statement(
+        PostgresUtility.debug_statement(self.logger, 
             stmt,
             operation="ADD FOREIGN KEY",
             table_name=f"{schema_name}.{table_name}",
@@ -556,7 +560,7 @@ class PostgresDDL(PostgresComponentBase):
             f'ALTER TABLE "{schema_name}"."{table_name}" '
             f'DROP CONSTRAINT IF EXISTS "{constraint_name}"'
         )
-        self.debug_statement(
+        PostgresUtility.debug_statement(self.logger, 
             stmt,
             operation="DROP CONSTRAINT",
             table_name=f"{schema_name}.{table_name}",
@@ -570,7 +574,7 @@ class PostgresDDL(PostgresComponentBase):
     # INTROSPECTION
     # ═══════════════════════════════════════════════════════════════════════
 
-    @retry()
+    @retry(max_attempts=3)
     async def get_column_data_type(
         self,
         schema_name: str,
@@ -590,7 +594,7 @@ class PostgresDDL(PostgresComponentBase):
               AND column_name = :column
             """
         )
-        self.debug_statement(
+        PostgresUtility.debug_statement(self.logger, 
             stmt,
             operation="GET COLUMN DATA TYPE",
             table_name=f"{schema_name}.{table_name}",

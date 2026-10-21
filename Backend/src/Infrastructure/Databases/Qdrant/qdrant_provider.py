@@ -2,7 +2,7 @@
 
 import uuid
 from typing import Optional, List, Dict, Any
-from logging import Logger
+from loguru._logger import Logger
 
 from qdrant_client import AsyncQdrantClient
 from qdrant_client.models import (
@@ -15,22 +15,17 @@ from qdrant_client.models import (
 )
 from loguru import logger as default_logger
 
-from DatabaseInfrastructure.Vector.vector_database_interface import VectorDBInterface
-from DatabaseInfrastructure.Interfaces.vector import VectorDocument
+from ..Interfaces.vector import VectorDocument
+from .utility import retry, QdrantUtility
 
 
-class QdrantProvider(VectorDBInterface):
+class QdrantProvider:
     """
-    Qdrant implementation of VectorDBInterface using AsyncQdrantClient.
+    Qdrant adapter using AsyncQdrantClient.
     Fully config/controller agnostic.
     """
 
-    DISTANCE_MAP = {
-        "cosine": Distance.COSINE,
-        "euclid": Distance.EUCLID,
-        "dot": Distance.DOT,
-        "manhattan": Distance.MANHATTAN,
-    }
+    DISTANCE_MAP = QdrantUtility.DISTANCE_MAP
 
     def __init__(self):
         """
@@ -88,7 +83,7 @@ class QdrantProvider(VectorDBInterface):
     async def init_class(
         cls,
         url: str,
-        api_key: str,
+        api_key: str | None = None,
         logger: Optional[Logger] = None,
         *args,
         **kwargs,
@@ -113,13 +108,18 @@ class QdrantProvider(VectorDBInterface):
 
         instance.logger.info("QdrantProvider initialized")
         instance.logger.success("QdrantProvider is ready to use")
-        await instance.connect()
+        try:
+            await instance.connect()
+        except Exception:
+            await instance.disconnect()
+            raise
         return instance
 
     # ------------------------------------------------------------------
     # Connection
     # ------------------------------------------------------------------
 
+    @retry(max_attempts=3)
     async def connect(self) -> bool:
         try:
             await self.client.get_collections()
@@ -127,8 +127,8 @@ class QdrantProvider(VectorDBInterface):
             self.logger.success("Qdrant connection verified")
             return True
         except Exception as e:
-            self.logger.error(f"Failed to connect to Qdrant: {e}")
-            return False
+            self.logger.exception("Failed to connect to Qdrant")
+            raise
 
     async def disconnect(self) -> None:
         try:
@@ -138,7 +138,8 @@ class QdrantProvider(VectorDBInterface):
                 self.logger.info("Disconnected from Qdrant server")
                 self.logger.success("Qdrant client closed successfully")
         except Exception as e:
-            self.logger.error(f"Error disconnecting from Qdrant: {e}")
+            self.logger.exception("Error disconnecting from Qdrant")
+            raise
 
     # ------------------------------------------------------------------
     # Collection management
@@ -186,7 +187,7 @@ class QdrantProvider(VectorDBInterface):
             self.logger.error(
                 f"Error creating collection '{collection_name}': {e}"
             )
-            return False
+            raise
 
     async def delete_collection(self, collection_name: str) -> bool:
         self.logger.info(f"Attempting to delete collection: '{collection_name}'")
@@ -208,8 +209,9 @@ class QdrantProvider(VectorDBInterface):
             self.logger.error(
                 f"Error deleting collection '{collection_name}': {e}"
             )
-            return False
+            raise
 
+    @retry(max_attempts=3)
     async def collection_exists(self, collection_name: str) -> bool:
         try:
             collections = await self.list_collections()
@@ -221,8 +223,9 @@ class QdrantProvider(VectorDBInterface):
             return exists
         except Exception as e:
             self.logger.error(f"Error checking collection existence: {e}")
-            return False
+            raise
 
+    @retry(max_attempts=3)
     async def list_collections(self) -> List[str]:
         try:
             response = await self.client.get_collections()
@@ -232,8 +235,9 @@ class QdrantProvider(VectorDBInterface):
             return names
         except Exception as e:
             self.logger.error(f"Error listing collections: {e}")
-            return []
+            raise
 
+    @retry(max_attempts=3)
     async def get_collection_info(self, collection_name: str) -> dict:
         self.logger.info(
             f"Fetching info for collection: '{collection_name}'"
@@ -262,7 +266,7 @@ class QdrantProvider(VectorDBInterface):
             self.logger.error(
                 f"Error getting collection info for '{collection_name}': {e}"
             )
-            return {}
+            raise
 
     # ------------------------------------------------------------------
     # CRUD — Insert
@@ -305,7 +309,7 @@ class QdrantProvider(VectorDBInterface):
             return True
         except Exception as e:
             self.logger.error(f"Error inserting document: {e}")
-            return False
+            raise
 
     async def insert_many(
         self,
@@ -366,12 +370,13 @@ class QdrantProvider(VectorDBInterface):
             return True
         except Exception as e:
             self.logger.error(f"Error during bulk insert: {e}")
-            return False
+            raise
 
     # ------------------------------------------------------------------
     # Retrieval — Single by ID
     # ------------------------------------------------------------------
 
+    @retry(max_attempts=3)
     async def get_document(
         self,
         collection_name: str,
@@ -424,12 +429,13 @@ class QdrantProvider(VectorDBInterface):
             self.logger.error(
                 f"Error fetching document '{document_id}': {e}"
             )
-            return None
+            raise
 
     # ------------------------------------------------------------------
     # Retrieval — Multiple by IDs
     # ------------------------------------------------------------------
 
+    @retry(max_attempts=3)
     async def get_many_documents(
         self,
         collection_name: str,
@@ -479,12 +485,13 @@ class QdrantProvider(VectorDBInterface):
             return documents
         except Exception as e:
             self.logger.error(f"Error fetching multiple documents: {e}")
-            return []
+            raise
 
     # ------------------------------------------------------------------
     # Retrieval — All documents (with optional filter)
     # ------------------------------------------------------------------
 
+    @retry(max_attempts=3)
     async def get_all_documents(
         self,
         collection_name: str,
@@ -559,12 +566,13 @@ class QdrantProvider(VectorDBInterface):
             self.logger.error(
                 f"Error fetching documents from '{collection_name}': {e}"
             )
-            return []
+            raise
 
     # ------------------------------------------------------------------
     # Search — Vector similarity (with optional filter)
     # ------------------------------------------------------------------
 
+    @retry(max_attempts=3)
     async def search(
         self,
         collection_name: str,
@@ -588,12 +596,25 @@ class QdrantProvider(VectorDBInterface):
         try:
             qdrant_filter = self._build_filter(filters) if filters else None
 
-            results = await self.client.search(
-                collection_name=collection_name,
-                query_vector=vector,
-                query_filter=qdrant_filter,
-                limit=top_k,
-            )
+            if hasattr(self.client, "query_points"):
+                response = await self.client.query_points(
+                    collection_name=collection_name,
+                    query=vector,
+                    query_filter=qdrant_filter,
+                    limit=top_k,
+                    with_vectors=True,
+                    with_payload=True,
+                )
+                results = response.points
+            else:
+                results = await self.client.search(
+                    collection_name=collection_name,
+                    query_vector=vector,
+                    query_filter=qdrant_filter,
+                    limit=top_k,
+                    with_vectors=True,
+                    with_payload=True,
+                )
 
             self.logger.info(
                 f"Search returned {len(results)} results "
@@ -619,12 +640,13 @@ class QdrantProvider(VectorDBInterface):
             return documents
         except Exception as e:
             self.logger.error(f"Error searching '{collection_name}': {e}")
-            return []
+            raise
 
     # ------------------------------------------------------------------
     # Count
     # ------------------------------------------------------------------
 
+    @retry(max_attempts=3)
     async def count_documents(
         self,
         collection_name: str,
@@ -654,4 +676,4 @@ class QdrantProvider(VectorDBInterface):
             self.logger.error(
                 f"Error counting documents in '{collection_name}': {e}"
             )
-            return 0
+            raise

@@ -1,31 +1,37 @@
 import os
 import secrets
 import loguru
+from loguru._logger import Logger
 from typing import Optional, Dict, Any
 from fastapi import Request, HTTPException, status
 from authlib.integrations.starlette_client import OAuth
+from ..utility import AuthenticationUtility
 
 
 class GoogleOAuthHandler:
-    def __init__(self, logger: Optional[loguru.Logger] = None) -> None:
+    def __init__(self, logger: Optional[Logger] = None) -> None:
         self.logger = logger or loguru.logger
         self.oauth = OAuth()
+        client_id = os.getenv("GOOGLE_CLIENT_ID")
+        client_secret = os.getenv("GOOGLE_CLIENT_SECRET")
+        if not client_id or not client_secret:
+            raise RuntimeError("GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET are required")
 
         self.oauth.register(
             name="google",
-            client_id=os.getenv("GOOGLE_CLIENT_ID"),
-            client_secret=os.getenv("GOOGLE_CLIENT_SECRET"),
+            client_id=client_id,
+            client_secret=client_secret,
             server_metadata_url=(
-                "https://accounts.google.com/.well-known/openid-configuration"
+                AuthenticationUtility.GOOGLE_METADATA_URL
             ),
             client_kwargs={
-                "scope": "openid email profile",
+                "scope": AuthenticationUtility.GOOGLE_SCOPE,
                 "prompt": "select_account",  # lets users pick/change accounts
             },
         )
 
     @classmethod
-    async def init_class(cls, logger: Optional[loguru.Logger] = None) -> "GoogleOAuthHandler":
+    async def init_class(cls, logger: Optional[Logger] = None) -> "GoogleOAuthHandler":
         logger = logger or loguru.logger
         logger.info("Initializing Google OAuth provider...")
         try:
@@ -64,7 +70,7 @@ class GoogleOAuthHandler:
         state_param = request.query_params.get("state")
         state_session = request.session.get("oauth_state")
 
-        if not state_param or not state_session or state_param != state_session:
+        if not state_param or not state_session or not secrets.compare_digest(state_param, state_session):
             self.logger.warning("OAuth state mismatch — possible CSRF attack")
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -124,12 +130,8 @@ class GoogleOAuthHandler:
         """
         url = request.url_for("google_callback")
 
-        # If a reverse proxy terminated TLS, it usually sets this header
-        forwarded_proto = request.headers.get("x-forwarded-proto")
-        if forwarded_proto:
-            # Reconstruct: https://host/path
-            return f"{forwarded_proto}://{url.netloc}{url.path}"
-
+        # Trust proxy headers only via the ASGI server's trusted proxy setup;
+        # never assemble security-critical redirect URIs from client headers.
         return str(url)
 
 

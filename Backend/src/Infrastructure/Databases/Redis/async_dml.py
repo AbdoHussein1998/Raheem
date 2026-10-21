@@ -1,16 +1,15 @@
 from typing import Any, AsyncGenerator, Dict, List, Optional
-from contextlib import asynccontextmanager
 import asyncio
 
 import loguru
-import redis.asyncio as redis
+from loguru._logger import Logger
 from redis.asyncio import client
 
-from DatabaseInfrastructure.Interfaces.document_dml import DocumentInterfaceDML
-from .async_connection import RedisConnectionManager, retry
+from .async_connection import RedisConnectionManager
+from .utility import retry
 
 
-class RedisDML(DocumentInterfaceDML):
+class RedisDML:
     """
     Async Redis Data Manipulation Layer with pipeline batching,
     connection pooling, and proper lifecycle management.
@@ -19,27 +18,25 @@ class RedisDML(DocumentInterfaceDML):
     def __init__(
         self,
         connection_manager: RedisConnectionManager,
-        logger: Optional[loguru.Logger] = None,
+        logger: Optional[Logger] = None,
     ):
         self.connection_manager = connection_manager
-        self.logger = logger or loguru.logger
-        self._client: Optional[client.Redis] = None
+        self.conn = connection_manager  # retry decorator expects this name
+        self.logger = logger or connection_manager.logger
+        self._connected = False
 
     # ── Lifecycle ──────────────────────────────────────────────────────────
 
     async def connect(self) -> None:
         """Initialize the Redis client from the connection manager."""
-        if self._client is None:
-            self.logger.debug("Initializing Redis client")
-            self._client = await self.connection_manager.get_client()
-            self.logger.info("Redis client connected")
+        if not await self.connection_manager.ensure_connected():
+            raise ConnectionError("Redis connection unavailable")
+        self._connected = True
 
     async def disconnect(self) -> None:
         """Gracefully close the Redis client and release connections."""
-        if self._client is not None:
-            await self._client.aclose()
-            self._client = None
-            self.logger.info("Redis client disconnected")
+        # RedisDML borrows the manager's pool; it never closes that shared pool.
+        self._connected = False
 
     async def __aenter__(self) -> "RedisDML":
         await self.connect()
@@ -51,17 +48,15 @@ class RedisDML(DocumentInterfaceDML):
     @property
     def client(self) -> client.Redis:
         """Lazy-access client with validation."""
-        if self._client is None:
-            raise RuntimeError(
-                "Redis client not connected. Use 'async with' or call connect() first."
-            )
-        return self._client
+        if not self._connected or self.connection_manager.client is None:
+            raise RuntimeError("Redis client not connected. Call connect() first.")
+        return self.connection_manager.client
 
     @classmethod
     async def init_class(
         cls,
         connection_manager: RedisConnectionManager,
-        logger: Optional[loguru.Logger] = None,
+        logger: Optional[Logger] = None,
     ) -> "RedisDML":
         """Factory method with guaranteed connection."""
         instance = cls(connection_manager, logger)
@@ -97,14 +92,12 @@ class RedisDML(DocumentInterfaceDML):
             if ttl is not None:
                 ttl_ok = await self.set_ttl(key, ttl)
                 if not ttl_ok:
-                    self.logger.warning(
-                        f"Document inserted but TTL not set for key '{key}'"
-                    )
+                    raise RuntimeError(f"Redis TTL was not applied to inserted key '{key}'")
 
             return True
         except Exception as e:
             self.logger.exception(f"Error inserting key '{key}': {e}")
-            return False
+            raise
 
     async def insert_many(
         self,
@@ -129,6 +122,8 @@ class RedisDML(DocumentInterfaceDML):
         """
         if len(keys) != len(documents):
             raise ValueError("Keys and documents must have the same length")
+        if batch_size <= 0:
+            raise ValueError("batch_size must be positive")
 
         self.logger.info(f"Bulk inserting {len(keys)} documents")
         inserted = 0
@@ -146,10 +141,11 @@ class RedisDML(DocumentInterfaceDML):
             inserted += sum(1 for r in results if r is not None)
 
             if ttl is not None:
-                await asyncio.gather(
+                ttl_results = await asyncio.gather(
                     *(self.set_ttl(k, ttl) for k in batch_keys),
-                    return_exceptions=True,
                 )
+                if not all(ttl_results):
+                    raise RuntimeError("Redis batch TTL assignment incomplete")
 
         self.logger.info(f"Successfully inserted {inserted}/{len(keys)} documents")
         return inserted
@@ -171,9 +167,9 @@ class RedisDML(DocumentInterfaceDML):
             return False
         except Exception as e:
             self.logger.exception(f"Error setting TTL on key '{key}': {e}")
-            return False
+            raise
 
-    @retry()
+    @retry(max_attempts=3)
     async def get_ttl(self, key: str) -> Optional[int]:
         """
         Get remaining TTL in seconds for a key.
@@ -192,11 +188,11 @@ class RedisDML(DocumentInterfaceDML):
             return ttl
         except Exception as e:
             self.logger.exception(f"Error getting TTL for key '{key}': {e}")
-            return None
+            raise
 
     # ── Read ───────────────────────────────────────────────────────────────
 
-    @retry()
+    @retry(max_attempts=3)
     async def get_one(
         self,
         key: str,
@@ -212,7 +208,7 @@ class RedisDML(DocumentInterfaceDML):
             return await self.client.hget(key, field)
         except Exception as e:
             self.logger.exception(f"Error retrieving key '{key}': {e}")
-            return None
+            raise
 
     async def get_many(
         self,
@@ -223,6 +219,8 @@ class RedisDML(DocumentInterfaceDML):
         Bulk retrieve using pipelining.
         Returns list of documents (skips missing keys).
         """
+        if batch_size <= 0:
+            raise ValueError("batch_size must be positive")
         if not keys:
             return []
 
@@ -251,6 +249,8 @@ class RedisDML(DocumentInterfaceDML):
         Memory-efficient streaming with SCAN + pipeline batching.
         Only holds ~batch_size documents in memory at any time.
         """
+        if batch_size <= 0:
+            raise ValueError("batch_size must be positive")
         key_buffer: List[str] = []
 
         async for key in self.client.scan_iter(match=pattern, count=batch_size):
@@ -281,6 +281,7 @@ class RedisDML(DocumentInterfaceDML):
             if batch:
                 yield batch
 
+    @retry(max_attempts=3)
     async def get_many_by_pattern(
         self,
         pattern: str = "*",
@@ -301,6 +302,8 @@ class RedisDML(DocumentInterfaceDML):
             pattern: glob-style key pattern (same as SCAN MATCH), e.g. "user:*"
             batch_size: SCAN/pipeline batch size, forwarded to stream_many_docs()
         """
+        if batch_size <= 0:
+            raise ValueError("batch_size must be positive")
         results: List[Dict[str, Any]] = []
         async for batch in self.stream_many_docs(pattern=pattern, batch_size=batch_size):
             results.extend(batch)
@@ -374,6 +377,8 @@ class RedisDML(DocumentInterfaceDML):
         """
         if len(keys) != len(documents):
             raise ValueError("Keys and documents must have the same length")
+        if batch_size <= 0:
+            raise ValueError("batch_size must be positive")
 
         updated = 0
         for i in range(0, len(keys), batch_size):
@@ -385,7 +390,7 @@ class RedisDML(DocumentInterfaceDML):
                 self.update_one(k, d, merge=merge, upsert=upsert, ttl=ttl)
                 for k, d in zip(batch_keys, batch_docs)
             ]
-            results = await asyncio.gather(*tasks, return_exceptions=True)
+            results = await asyncio.gather(*tasks)
 
             updated += sum(1 for r in results if r is True)
 
@@ -411,7 +416,7 @@ class RedisDML(DocumentInterfaceDML):
             return False
         except Exception as e:
             self.logger.exception(f"Error deleting key '{key}': {e}")
-            return False
+            raise
 
     async def delete_many(
         self,
@@ -429,6 +434,8 @@ class RedisDML(DocumentInterfaceDML):
         handling stays centralized in delete_one().
         Returns count of deleted keys.
         """
+        if batch_size <= 0:
+            raise ValueError("batch_size must be positive")
         if not keys:
             return 0
 
@@ -438,7 +445,7 @@ class RedisDML(DocumentInterfaceDML):
             batch = keys[i : i + batch_size]
 
             tasks = [self.delete_one(k) for k in batch]
-            results = await asyncio.gather(*tasks, return_exceptions=True)
+            results = await asyncio.gather(*tasks)
 
             deleted_total += sum(1 for r in results if r is True)
 

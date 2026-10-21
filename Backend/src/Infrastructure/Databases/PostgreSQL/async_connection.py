@@ -28,13 +28,13 @@ from typing import Any, Optional
 from urllib.parse import quote_plus
 import loguru
 from sqlalchemy import text
+from sqlalchemy.exc import OperationalError, InterfaceError
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
-from DatabaseInfrastructure.Interfaces.connection import ConnectionManagerInterface
-from functools import wraps
+from .utility import retry
 
 
 
-class PostgresConnectionManager(ConnectionManagerInterface):
+class PostgresConnectionManager:
     """
     Owns the async SQLAlchemy engine for a single (host, port, database,
     username) target. Reconnects are task-safe via an internal
@@ -105,22 +105,19 @@ class PostgresConnectionManager(ConnectionManagerInterface):
 
     async def connect(self) -> None:
         """Build the main engine and verify connectivity. Idempotent."""
-        if self._engine is not None:
-            self.logger.debug("connect() called but engine already exists — no-op")
-            return
-
-        self.logger.info("Connecting PostgresConnectionManager...")
-        engine = self._build_engine(self.username, self.password, self.database)
-
-        try:
-            await self.ensure_connected(engine)
-        except Exception as e:
-            self.logger.exception(f"Initial connectivity check failed: {e}")
-            await engine.dispose()
-            raise
-
-        self._engine = engine
-        self.logger.info("PostgresConnectionManager connected successfully")
+        async with self._reconnect_lock:
+            if self._engine is not None:
+                return
+            self.logger.info("Connecting PostgresConnectionManager...")
+            engine = self._build_engine(self.username, self.password, self.database)
+            try:
+                await self.ensure_connected(engine)
+            except Exception:
+                self.logger.exception("Initial PostgreSQL connectivity check failed")
+                await engine.dispose()
+                raise
+            self._engine = engine
+            self.logger.info("PostgresConnectionManager connected successfully")
 
     async def disconnect(self) -> None:
         """Dispose the main engine. Safe to call multiple times."""
@@ -157,8 +154,14 @@ class PostgresConnectionManager(ConnectionManagerInterface):
                 except Exception:
                     self.logger.exception("Error disposing old engine during reconnect()")
 
-            self._engine = self._build_engine(self.username, self.password, self.database)
-            self.logger.info("PostgresConnectionManager reconnected: new engine built")
+            new_engine = self._build_engine(self.username, self.password, self.database)
+            try:
+                await self.ensure_connected(new_engine)
+            except Exception:
+                await new_engine.dispose()
+                raise
+            self._engine = new_engine
+            self.logger.info("PostgresConnectionManager reconnected and verified")
 
     async def ensure_connected(self, engine) -> None:
         """Verify that the given engine can actually connect to Postgres."""
@@ -167,81 +170,6 @@ class PostgresConnectionManager(ConnectionManagerInterface):
 
 
 
-    @staticmethod
-    def retry(
-        max_attempts: int = 2,          # first try + 1 retry by default
-        base_delay: float = 0.1,
-        max_delay: float = 2.0,
-        backoff_factor: float = 2.0,
-        exceptions: tuple =(Exception,) ,
-    ) -> Callable:
-        """
-        Retry async methods on connection-related failures.
-
-        - Retries only on transient connection errors
-        - Reconnects between attempts
-        - Leaves integrity errors and programming errors untouched
-        - Centralizes connection-failure logging here
-        """
-
-        def decorator(func: Callable) -> Callable:
-            @wraps(func)
-            async def wrapper(self, *args, **kwargs):
-                conn = getattr(self, "conn", None) or self
-                delay = base_delay
-                last_exception = None
-
-                for attempt in range(1, max_attempts + 1):
-                    self.logger.debug(
-                        f"Entering '{func.__name__}' attempt {attempt}/{max_attempts} "
-                        f"with args={args}, kwargs={kwargs}"
-                    )
-
-                    try:
-                        return await func(self, *args, **kwargs)
-
-                    except exceptions as e:
-                        last_exception = e
-                        error_name = type(e).__name__
-
-                        if attempt == max_attempts:
-                            self.logger.exception(
-                                f"{error_name} in '{func.__name__}' after "
-                                f"{max_attempts} attempts: {e}"
-                            )
-                            raise
-
-                        self.logger.warning(
-                            f"{error_name} in '{func.__name__}', reconnecting and "
-                            f"retrying in {delay:.2f}s (attempt {attempt}/{max_attempts})"
-                        )
-
-                        try:
-                            await conn.reconnect()
-                        except Exception as reconnect_err:
-                            self.logger.warning(
-                                f"Reconnect failed before retry of '{func.__name__}': "
-                                f"{type(reconnect_err).__name__}: {reconnect_err}"
-                            )
-
-                        await asyncio.sleep(delay)
-                        delay = min(delay * backoff_factor, max_delay)
-
-                    except IntegrityError as e:
-                        self.logger.exception(f"IntegrityError in '{func.__name__}': {e}")
-                        raise
-
-                    except Exception as e:
-                        self.logger.exception(
-                            f"Unexpected error in '{func.__name__}': {e}"
-                        )
-                        raise
-
-                raise last_exception  # safety net
-
-            return wrapper
-
-        return decorator
 
 
 
@@ -256,7 +184,7 @@ class PostgresConnectionManager(ConnectionManagerInterface):
                 f"Exception inside PostgresConnectionManager context: "
                 f"{exc_type.__name__}: {exc_val}"
             )
-        await self.close()
+        await self.disconnect()
 
     # ─── Access ─────────────────────────────────────────────────────────────
 
@@ -300,6 +228,4 @@ class PostgresConnectionManager(ConnectionManagerInterface):
             pool_recycle=self.pool_recycle,
         )
 
-
-retry = PostgresConnectionManager.retry
 

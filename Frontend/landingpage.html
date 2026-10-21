@@ -1,0 +1,812 @@
+<!doctype html>
+<html dir="rtl" lang="ar">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <meta content="web_standard" name="shell-type" />
+    <title>رحيم رحمة من الله</title>
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=Noto+Serif:wght@400;700&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      @layer base {
+        html,
+        body {
+          margin: 0;
+          padding: 0;
+        }
+        body {
+          overscroll-behavior: none;
+        }
+        main > :first-child {
+          margin-top: 0 !important;
+        }
+        main > :last-child {
+          margin-bottom: 0 !important;
+        }
+      }
+      ::-webkit-scrollbar {
+        display: none;
+      }
+    </style>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-primary-fixed": "#002117",
+              "inverse-surface": "#263143",
+              surface: "#f9f9ff",
+              error: "#ba1a1a",
+              "on-primary-container": "#79a292",
+              "on-error-container": "#93000a",
+              "on-surface": "#111c2d",
+              "surface-container": "#e7eeff",
+              "on-secondary-container": "#78603e",
+              "surface-container-highest": "#d8e3fb",
+              "on-tertiary-fixed": "#2f1500",
+              "surface-variant": "#d8e3fb",
+              "on-tertiary": "#ffffff",
+              "on-secondary": "#ffffff",
+              "error-container": "#ffdad6",
+              "surface-container-low": "#f0f3ff",
+              "primary-fixed": "#c1ecda",
+              "secondary-fixed": "#fedeb2",
+              "primary-fixed-dim": "#a6d0be",
+              "on-secondary-fixed": "#281800",
+              outline: "#717975",
+              background: "#f9f9ff",
+              "inverse-on-surface": "#ecf1ff",
+              "surface-dim": "#cfdaf2",
+              "surface-bright": "#f9f9ff",
+              "on-background": "#111c2d",
+              "surface-container-high": "#dee8ff",
+              tertiary: "#301600",
+              "on-primary-fixed-variant": "#274e41",
+              "on-primary": "#ffffff",
+              "on-error": "#ffffff",
+              "surface-tint": "#3f6658",
+              "tertiary-fixed-dim": "#ffb77d",
+              "secondary-container": "#fedeb2",
+              "on-tertiary-container": "#e48015",
+              secondary: "#725b38",
+              "inverse-primary": "#a6d0be",
+              "outline-variant": "#c1c8c3",
+              "on-surface-variant": "#414845",
+              "secondary-fixed-dim": "#e0c298",
+              "on-tertiary-fixed-variant": "#6e3900",
+              "tertiary-fixed": "#ffdcc3",
+              "primary-container": "#0f382c",
+              primary: "#002218",
+              "on-secondary-fixed-variant": "#584323",
+              "surface-container-lowest": "#ffffff",
+              "tertiary-container": "#4f2700",
+            },
+            borderRadius: {
+              DEFAULT: "0.25rem",
+              lg: "0.5rem",
+              xl: "0.75rem",
+              full: "9999px",
+            },
+            spacing: {
+              "space-lg": "2rem",
+              "space-md": "1.25rem",
+              gutter: "1.5rem",
+              margin: "2.5rem",
+              "margin-mobile": "1.25rem",
+              "gutter-mobile": "1rem",
+              "space-sm": "0.75rem",
+              "space-xl": "3.25rem",
+              "space-xs": "0.375rem",
+            },
+            fontFamily: {
+              "headline-md": ["IBM Plex Sans", "sans-serif"],
+              "display-lg": ["Noto Serif", "serif"],
+              "body-md": ["IBM Plex Sans", "sans-serif"],
+              "display-lg-mobile": ["Noto Serif", "serif"],
+              "scripture-quote-mobile": ["Noto Serif", "serif"],
+              "label-md": ["IBM Plex Sans", "sans-serif"],
+              "label-sm": ["IBM Plex Sans", "sans-serif"],
+              "body-lg": ["IBM Plex Sans", "sans-serif"],
+              "headline-lg": ["IBM Plex Sans", "sans-serif"],
+              "scripture-quote": ["Noto Serif", "serif"],
+              "body-sm": ["IBM Plex Sans", "sans-serif"],
+              "headline-sm": ["IBM Plex Sans", "sans-serif"],
+            },
+            fontSize: {
+              "headline-md": [
+                "22px",
+                { lineHeight: "36px", fontWeight: "600" },
+              ],
+              "display-lg": ["40px", { lineHeight: "62px", fontWeight: "700" }],
+              "body-md": ["16px", { lineHeight: "28px", fontWeight: "400" }],
+              "display-lg-mobile": [
+                "28px",
+                { lineHeight: "44px", fontWeight: "700" },
+              ],
+              "scripture-quote-mobile": [
+                "20px",
+                { lineHeight: "40px", fontWeight: "400" },
+              ],
+              "label-md": ["13px", { lineHeight: "20px", fontWeight: "500" }],
+              "label-sm": [
+                "11px",
+                {
+                  lineHeight: "16px",
+                  letterSpacing: "0.02em",
+                  fontWeight: "600",
+                },
+              ],
+              "body-lg": ["18px", { lineHeight: "32px", fontWeight: "400" }],
+              "headline-lg": [
+                "28px",
+                { lineHeight: "44px", fontWeight: "700" },
+              ],
+              "scripture-quote": [
+                "24px",
+                { lineHeight: "50px", fontWeight: "400" },
+              ],
+              "body-sm": ["14px", { lineHeight: "24px", fontWeight: "400" }],
+              "headline-sm": [
+                "18px",
+                { lineHeight: "28px", fontWeight: "600" },
+              ],
+            },
+          },
+        },
+      };
+    </script>
+  </head>
+  <body
+    class="bg-surface font-body-md text-body-md text-on-surface antialiased min-h-screen selection:bg-secondary-fixed selection:text-on-secondary-fixed flex flex-col justify-between"
+  >
+    <!-- Header -->
+    <header
+      class="fixed top-0 w-full z-50 bg-surface/90 backdrop-blur-xl border-b border-surface-container-high/60 shadow-[0_1px_8px_rgba(0,0,0,0.03)]"
+    >
+      <div
+        class="h-20 max-w-7xl mx-auto px-margin-mobile lg:px-margin flex items-center justify-between gap-space-md"
+      >
+        <!-- Brand Logo & Identity -->
+        <a class="flex items-center gap-space-sm group" href="#">
+          <div class="relative flex items-center justify-center">
+            <img
+              alt="شعار من حب الله دل عليه"
+              class="w-10 h-10 rounded-full object-cover ring-2 ring-primary/10 group-hover:ring-surface-tint transition-all"
+              src="https://lh3.googleusercontent.com/aida/AEtjO1XEoBj7efuEEZpKQCvYqGfS1_fCb_Al87OW_34WH_NaMxB5zKK476iwgqSmV93_WT47nEWcoaO1MLPVyeIHNrF08EVnQtLN6uzPfkFtFnnrIrdyFNL8myTGwwEghOm2N2-Zez3TH8tam9QBJ2dv-1A0q45rpLMMKxBD29ehNEwsUNDtpKLv28ejf2a99uhZPx3PpgyTHJQgPuEUwqqXY4caq1U_cLYxXv9ILoWWRPFt"
+            />
+          </div>
+          <div class="flex flex-col text-right">
+            <span
+              class="font-headline-sm text-headline-sm text-primary font-bold tracking-tight"
+              >من حب الله دل عليه</span
+            >
+            <span
+              class="font-label-sm text-label-sm text-secondary hidden sm:inline-block"
+              >اجعل لك مشروع دعوة</span
+            >
+          </div>
+        </a>
+        <!-- Gateway Primary Nav Links -->
+        <nav
+          class="hidden lg:flex items-center gap-1.5"
+          data-active-classes="bg-primary-container text-on-primary font-semibold rounded-lg"
+        >
+          <a
+            aria-current="page"
+            class="px-space-sm py-space-xs transition-all bg-primary-container text-on-primary text-body-sm font-semibold rounded-lg shadow-sm"
+            href="#"
+            >الرئيسية</a
+          >
+          <a
+            class="px-space-sm py-space-xs rounded-lg text-body-sm text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all"
+            href="#gateways"
+            >اخر الاخبار </a
+          >
+          <a
+            class="px-space-sm py-space-xs rounded-lg text-body-sm text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all"
+            href="#raheem"
+            >اسأل رحيم</a
+          >
+          <a
+            class="px-space-sm py-space-xs rounded-lg text-body-sm text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all"
+            href="#consultation"
+            >الاستشارات</a
+          >
+          <a
+            class="px-space-sm py-space-xs rounded-lg text-body-sm text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all"
+            href="#endowment"
+            >الوقف والدعم</a
+          >
+        </nav>
+        <!-- Utility Actions -->
+        <div class="flex items-center gap-space-xs">
+          <button
+            aria-label="البحث"
+            class="flex items-center gap-space-xs h-10 px-3.5 rounded-full bg-surface-container-low text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors border border-outline-variant/30"
+            type="button"
+          >
+            <span class="material-symbols-outlined text-[19px]">search</span>
+            <span
+              class="hidden md:inline font-label-sm text-label-sm bg-surface-container-lowest px-1.5 py-0.5 rounded text-outline border border-outline-variant/40"
+              >Ctrl + K</span
+            >
+          </button>
+
+          <button
+            aria-label="تبديل المظهر"
+            class="w-10 h-10 rounded-full flex items-center justify-center bg-surface-container-low text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors border border-outline-variant/30"
+            type="button"
+          >
+            <span class="material-symbols-outlined text-[20px]">dark_mode</span>
+          </button>
+        </div>
+      </div>
+    </header>
+    <!-- Main Content -->
+    <main class="w-full pt-20 flex-grow">
+      <div class="relative w-full overflow-hidden">
+        <!-- Ambient Lighting Backdrops -->
+        <div
+          class="absolute -top-32 right-1/4 w-[500px] h-[500px] bg-primary-fixed/35 rounded-full blur-3xl pointer-events-none -z-10"
+        ></div>
+        <div
+          class="absolute top-96 left-10 w-[420px] h-[420px] bg-secondary-container/40 rounded-full blur-3xl pointer-events-none -z-10"
+        ></div>
+        <div
+          class="max-w-7xl mx-auto px-margin-mobile lg:px-margin py-space-md lg:py-space-lg"
+        >
+          <!-- HERO: Spiritual Welcome & Portal Gateway Overview -->
+          <section
+            class="w-full bg-surface-container-lowest rounded-2xl p-space-md lg:p-space-lg shadow-[0_4px_28px_-6px_rgba(15,56,44,0.06)] border border-surface-container-high/80 relative overflow-hidden mb-space-xl text-center"
+          >
+            <!-- Geometric Watermark -->
+            <div
+              class="absolute -left-14 -bottom-14 opacity-[0.04] pointer-events-none text-primary"
+            >
+              <svg class="w-72 h-72" fill="currentColor" viewBox="0 0 100 100">
+                <polygon
+                  points="50 0, 61 38, 98 35, 68 59, 79 96, 50 72, 21 96, 32 59, 2 35, 39 38"
+                ></polygon>
+                <circle
+                  cx="50"
+                  cy="50"
+                  fill="none"
+                  r="28"
+                  stroke="currentColor"
+                  stroke-width="3"
+                ></circle>
+              </svg>
+            </div>
+            <div
+              class="absolute -right-14 -top-14 opacity-[0.04] pointer-events-none text-primary"
+            >
+              <svg class="w-72 h-72" fill="currentColor" viewBox="0 0 100 100">
+                <polygon
+                  points="50 0, 61 38, 98 35, 68 59, 79 96, 50 72, 21 96, 32 59, 2 35, 39 38"
+                ></polygon>
+              </svg>
+            </div>
+            <div
+              class="max-w-3xl mx-auto flex flex-col items-center relative z-10"
+            >
+              <!-- Hijri & Context Badge -->
+              
+               
+            <div>
+              <!-- Main Heading -->
+              <h1
+                class="font-display-lg text-display-lg-mobile md:text-display-lg text-primary tracking-tight mb-space-xs font-bold"
+                 >بكل رحمة و حب نقدم لكم رحيم
+                
+            </h1>
+              <!-- Scripture Quote -->
+              <blockquote
+                class="font-scripture-quote text-scripture-quote-mobile md:text-scripture-quote text-secondary italic mb-space-sm max-w-2xl leading-relaxed"
+              > ليكون لك مشروع دعوة </blockquote>
+              <!-- Guidance Subtitle -->
+              
+            </div>
+          </section>
+          <!-- SECTION: THE 4 PRIMARY GATEWAY CARDS (2x2 Grid) -->
+          <section
+            class="grid grid-cols-1 md:grid-cols-2 gap-gutter lg:gap-space-lg mb-space-xl items-stretch"
+            id="gateways"
+          >
+            <!-- GATEWAY CARD 1: -->
+            <article
+              class="group relative bg-surface-container-lowest rounded-2xl p-space-md lg:p-space-lg shadow-[0_4px_24px_-4px_rgba(15,56,44,0.06)] hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-300 border border-surface-container-high/80 flex flex-col justify-between overflow-hidden"
+              id="lessons"
+            >
+              <!-- Top Emerald Accents -->
+              <div
+                class="absolute top-0 right-0 left-0 h-1.5 bg-gradient-to-l from-primary via-surface-tint to-primary-fixed-dim"
+              ></div>
+              <div>
+                <!-- Card Top Meta & Icon -->
+                <div
+                  class="flex items-start justify-between gap-space-sm mb-space-md"
+                >
+                  <div
+                    class="w-14 h-14 rounded-xl bg-primary-container text-on-primary flex items-center justify-center shadow-md group-hover:scale-105 group-hover:bg-primary transition-all"
+                  >
+                    <span class="material-symbols-outlined text-[30px]"
+                      >newspaper</span
+                    >
+                  </div>
+                  <div class="flex items-center gap-1.5">
+                    <span
+                      class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-secondary-fixed/70 text-on-secondary-fixed font-label-sm text-label-sm font-semibold"
+                    >
+                      <span
+                        class="w-2 h-2 rounded-full bg-secondary animate-pulse"
+                      ></span>
+                      <span class="">تغطيات وبيانات</span>
+                    </span>
+                    <span
+                      class="px-2.5 py-1 rounded-full bg-surface-container-low text-outline font-label-sm text-label-sm font-bold"
+                    >
+                      بوابة ١
+                    </span>
+                  </div>
+                </div>
+                <!-- Title & Description -->
+                <h2
+                  class="font-headline-lg text-headline-lg text-primary mb-space-xs font-bold group-hover:text-surface-tint transition-colors"
+                >
+                  آخر الأخبار والمستجدات
+                </h2>
+                <p
+                  class="font-body-md text-body-md text-on-surface-variant mb-space-md leading-relaxed"
+                >
+                 اخر الشبهات المردود عليهاو اهم الاعلانات 
+                </p>
+                <!-- Curated Features & Stats Pill List -->
+                <div class="grid grid-cols-2 gap-space-xs mb-space-lg">
+                  <div
+                    class="bg-surface-container-low p-space-sm rounded-xl flex items-center gap-space-xs"
+                  >
+                    <span
+                      class="material-symbols-outlined text-secondary text-[22px]"
+                      >campaign</span
+                    >
+                    <div class="flex flex-col">
+                      <span class="font-label-sm text-label-sm text-outline"
+                        >تغطيات  لاهم الشبهات</span
+                      >
+                    </div>
+                  </div>
+                  <div
+                    class="bg-surface-container-low p-space-sm rounded-xl flex items-center gap-space-xs"
+                  >
+                    <span
+                      class="material-symbols-outlined text-surface-tint text-[22px]"
+                      >event_available</span
+                    >
+                    <div class="flex flex-col">
+                      <span
+                        class="font-headline-sm text-headline-sm text-primary font-bold"
+                        >تحديث أسبوعي</span
+                      >
+                      <span class="font-label-sm text-label-sm text-outline"
+                        >جدول الفعاليات والمجالس</span
+                      >
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- Prominent Gateway CTA Button -->
+              <div
+                class="pt-space-xs border-t border-surface-container-high/60"
+              >
+                <a
+                  class="w-full bg-primary-container hover:bg-primary text-on-primary py-3.5 px-space-md rounded-xl font-headline-sm text-headline-sm flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all group-hover:translate-x-0.5"
+                  href="#"
+                >
+                  <span class="">تصفح آخر الأخبار والمستجدات</span>
+                  <span
+                    class="material-symbols-outlined text-[22px] transform group-hover:-translate-x-1 transition-transform"
+                    >arrow_left_alt</span
+                  >
+                </a>
+              </div>
+            </article>
+            <!-- GATEWAY CARD 2: اسأل رحيم (المرشد الذكي المؤصل) -->
+            <article
+              class="group relative bg-surface-container-lowest rounded-2xl p-space-md lg:p-space-lg shadow-[0_4px_24px_-4px_rgba(15,56,44,0.06)] hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-300 border border-surface-container-high/80 flex flex-col justify-between overflow-hidden bg-gradient-to-br from-surface-container-lowest via-surface-container-lowest to-surface-container-low/70"
+              id="raheem"
+            >
+              <!-- Distinctive Emerald-Teal Accent -->
+              <div
+                class="absolute top-0 right-0 left-0 h-1.5 bg-gradient-to-l from-surface-tint via-primary-fixed to-secondary"
+              ></div>
+              <div>
+                <!-- Card Top Meta & Icon -->
+                <div
+                  class="flex items-start justify-between gap-space-sm mb-space-md"
+                >
+                  <div
+                    class="w-14 h-14 rounded-xl bg-surface-tint text-on-primary flex items-center justify-center shadow-md group-hover:scale-105 transition-all"
+                  >
+                    <span class="material-symbols-outlined text-[30px]"
+                      >psychology</span
+                    >
+                  </div>
+                  <div class="flex items-center gap-1.5">
+                    <span
+                      class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-primary-fixed text-on-primary-fixed-variant font-label-sm text-label-sm font-bold shadow-sm"
+                    >
+                      <span class="material-symbols-outlined text-[14px]"
+                        >auto_awesome</span
+                      >
+                      <span class="">ذكاء اصطناعي موثق</span>
+                    </span>
+                    <span
+                      class="px-2.5 py-1 rounded-full bg-surface-container-low text-outline font-label-sm text-label-sm font-bold"
+                    >
+                      بوابة ٢
+                    </span>
+                  </div>
+                </div>
+                <!-- Title & Description -->
+                <h2
+                  class="font-headline-lg text-headline-lg text-primary mb-space-xs font-bold group-hover:text-surface-tint transition-colors"
+                >
+                  اسأل رحيم (المرشد الذكي المؤصل)
+                </h2>
+                <p
+                  class="font-body-md text-body-md text-on-surface-variant mb-space-md leading-relaxed"
+                >
+                  مساعد رقمي فوري مدرب بدقة على أمهات المصادر المعتمدة والتراث
+                  العلمي الأصيل، يمنحك تدبراً عميقاً وإجابات واضحة لتساؤلاتك
+                  الإيمانية والفكرية على مدار الساعة.
+                </p>
+                <!-- Prompt Highlights Chips -->
+                <div class="flex flex-col gap-1.5 mb-space-lg">
+                  <span class="font-label-sm text-label-sm text-outline"
+                    >تساؤلات شائعة يمكنك طرحها:</span
+                  >
+                  <div class="flex items-center gap-1.5 flex-wrap">
+                    <span
+                      class="px-2.5 py-1 rounded-lg bg-surface-container text-primary text-body-sm font-medium"
+                      >هل ظلم الاسلام المراءة ؟</span
+                    >
+                    <span
+                      class="px-2.5 py-1 rounded-lg bg-surface-container text-primary text-body-sm font-medium"
+                      >كيف تتعارض نظرية التطور مع الاسلام ؟</span
+                    >
+                    <span
+                      class="px-2.5 py-1 rounded-lg bg-surface-container text-primary text-body-sm font-medium"
+                      >لماذا يعتبر العلاج بالطاقة نوع من الالحاد ؟ </span
+                    >
+                  </div>
+                </div>
+              </div>
+              <!-- Prominent Gateway CTA Button -->
+              <div
+                class="pt-space-xs border-t border-surface-container-high/60"
+              >
+                <a
+                  class="w-full bg-surface-tint hover:bg-primary text-on-primary py-3.5 px-space-md rounded-xl font-headline-sm text-headline-sm flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all group-hover:translate-x-0.5"
+                  href="#"
+                >
+                  <span class="">بدء المحادثة مع رحيم</span>
+                  <span
+                    class="material-symbols-outlined text-[22px] transform group-hover:-translate-x-1 transition-transform"
+                    >chat</span
+                  >
+                </a>
+              </div>
+            </article>
+            <!-- GATEWAY CARD 3: الاستشارات الشرعية والتربوية -->
+            <article
+              class="group relative bg-surface-container-lowest rounded-2xl p-space-md lg:p-space-lg shadow-[0_4px_24px_-4px_rgba(15,56,44,0.06)] hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-300 border border-surface-container-high/80 flex flex-col justify-between overflow-hidden"
+              id="consultation"
+            >
+              <!-- Warm Ochre & Gold Accent -->
+              <div
+                class="absolute top-0 right-0 left-0 h-1.5 bg-gradient-to-l from-secondary via-secondary-fixed-dim to-tertiary-fixed-dim"
+              ></div>
+              <div>
+                <!-- Card Top Meta & Icon -->
+                <div
+                  class="flex items-start justify-between gap-space-sm mb-space-md"
+                >
+                  <div
+                    class="w-14 h-14 rounded-xl bg-secondary text-on-secondary flex items-center justify-center shadow-md group-hover:scale-105 transition-all"
+                  >
+                    <span class="material-symbols-outlined text-[30px]"
+                      >support_agent</span
+                    >
+                  </div>
+                  <div class="flex items-center gap-1.5">
+                    <span
+                      class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-surface-container-high text-on-surface font-label-sm text-label-sm font-medium"
+                    >
+                      <span
+                        class="material-symbols-outlined text-[15px] text-surface-tint"
+                        >verified_user</span
+                      >
+                      <span class="">سرية تامة وتشفير</span>
+                    </span>
+                    <span
+                      class="px-2.5 py-1 rounded-full bg-surface-container-low text-outline font-label-sm text-label-sm font-bold"
+                    >
+                      بوابة ٣
+                    </span>
+                  </div>
+                </div>
+                <!-- Title & Description -->
+                <h2
+                  class="font-headline-lg text-headline-lg text-primary mb-space-xs font-bold group-hover:text-secondary transition-colors"
+                >
+                  الاستشارات الشرعية والتربوية
+                </h2>
+                <p
+                  class="font-body-md text-body-md text-on-surface-variant mb-space-md leading-relaxed"
+                >
+                  قناة تواصل خاصة ومباشرة مع نخبة من العلماء والمستشارين
+                  التربويين الموثوقين. اطرح نازلتك أو تساؤلك الفردي تلقي ما يشفي قلبك ان شاء الله 
+                  أو توجيهاً مدروساً بسرية كاملة.
+                </p>
+                <!-- Feature Highlights -->
+                <div class="grid grid-cols-2 gap-space-xs mb-space-lg">
+                  <div
+                    class="bg-surface-container-low p-space-sm rounded-xl flex items-center gap-space-xs"
+                  >
+                    <span
+                      class="material-symbols-outlined text-secondary text-[22px]"
+                      >timer</span
+                    >
+                    <div class="flex flex-col">
+                      <span
+                        class="font-headline-sm text-headline-sm text-primary font-bold"
+                        >خلال ٢٤ ساعة</span
+                      >
+                      <span class="font-label-sm text-label-sm text-outline"
+                        >متوسط زمن الرد المعتمد</span
+                      >
+                    </div>
+                  </div>
+                  <div
+                    class="bg-surface-container-low p-space-sm rounded-xl flex items-center gap-space-xs"
+                  >
+                    <span
+                      class="material-symbols-outlined text-surface-tint text-[22px]"
+                      >lock</span
+                    >
+                    <div class="flex flex-col">
+                      <span
+                        class="font-headline-sm text-headline-sm text-primary font-bold"
+                        >مشفر بالكامل</span
+                      >
+                      <span class="font-label-sm text-label-sm text-outline"
+                        >أمان وخصوصية وقفية</span
+                      >
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- Prominent Gateway CTA Button -->
+              <div
+                class="pt-space-xs border-t border-surface-container-high/60"
+              >
+                <a
+                  class="w-full bg-primary-container hover:bg-primary text-on-primary py-3.5 px-space-md rounded-xl font-headline-sm text-headline-sm flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all group-hover:translate-x-0.5"
+                  href="#"
+                >
+                  <span class="">طلب استشارة خاصة</span>
+                  <span
+                    class="material-symbols-outlined text-[22px] transform group-hover:-translate-x-1 transition-transform"
+                    >send</span
+                  >
+                </a>
+              </div>
+            </article>
+            <!-- GATEWAY CARD 4: مجتمع وتدارس المنصة -->
+            <article
+              class="group relative bg-surface-container-lowest rounded-2xl p-space-md lg:p-space-lg shadow-[0_4px_24px_-4px_rgba(15,56,44,0.06)] hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-300 border border-surface-container-high/80 flex flex-col justify-between overflow-hidden"
+              id="endowment"
+            >
+              <!-- Warm Gold & Amber Gradient Top Accent -->
+              <div
+                class="absolute top-0 right-0 left-0 h-1.5 bg-gradient-to-l from-secondary via-secondary-fixed-dim to-secondary-fixed"
+              ></div>
+              <div>
+                <!-- Card Top Meta & Icon -->
+                <div
+                  class="flex items-start justify-between gap-space-sm mb-space-md"
+                >
+                  <div
+                    class="w-14 h-14 rounded-xl bg-secondary text-on-secondary flex items-center justify-center shadow-md group-hover:scale-105 transition-all"
+                  >
+                    <span class="material-symbols-outlined text-[30px]"
+                      >volunteer_activism</span
+                    >
+                  </div>
+                  <div class="flex items-center gap-1.5">
+                    <span
+                      class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-secondary-fixed/70 text-on-secondary-fixed font-label-sm text-label-sm font-semibold"
+                    >
+                      <span class="material-symbols-outlined text-[15px]"
+                        >favorite</span
+                      >
+                      <span class="">صدقة جارية</span>
+                    </span>
+                    <span
+                      class="px-2.5 py-1 rounded-full bg-surface-container-low text-outline font-label-sm text-label-sm font-bold"
+                    >
+                      بوابة ٤
+                    </span>
+                  </div>
+                </div>
+                <!-- Title & Description -->
+                <h2
+                  class="font-headline-lg text-headline-lg text-primary mb-space-xs font-bold group-hover:text-secondary transition-colors"
+                >
+                  الوقف ودعم المنصة
+                </h2>
+                <p
+                  class="font-body-md text-body-md text-on-surface-variant mb-space-md leading-relaxed"
+                >
+                  مساهمتك تضمن استمرار البوابات التعليمية والتقنية وإتاحتها
+                  مجاناً للمسلمين حول العالم، سهم وقفي وأجر جارٍ مستمر.
+                </p>
+                <!-- Curated Features & Stats Pill List -->
+                <div class="grid grid-cols-2 gap-space-xs mb-space-lg">
+                  <div
+                    class="bg-surface-container-low p-space-sm rounded-xl flex items-center gap-space-xs"
+                  >
+                    <span
+                      class="material-symbols-outlined text-secondary text-[22px]"
+                      >all_inclusive</span
+                    >
+                    <div class="flex flex-col">
+                      <span
+                        class="font-headline-sm text-headline-sm text-primary font-bold"
+                        >أسهم متجددة</span
+                      >
+                      <span class="font-label-sm text-label-sm text-outline"
+                        >أثر علمي ممتد</span
+                      >
+                    </div>
+                  </div>
+                  <div
+                    class="bg-surface-container-low p-space-sm rounded-xl flex items-center gap-space-xs"
+                  >
+                    <span
+                      class="material-symbols-outlined text-surface-tint text-[22px]"
+                      >credit_card</span
+                    >
+                    <div class="flex flex-col">
+                      <span
+                        class="font-headline-sm text-headline-sm text-primary font-bold"
+                        >دفع آمن</span
+                      >
+                      <span class="font-label-sm text-label-sm text-outline"
+                        >مدى، أبل باي وفيزا</span
+                      >
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- Prominent Gateway CTA Button -->
+              <div
+                class="pt-space-xs border-t border-surface-container-high/60"
+              >
+                <a
+                  class="w-full bg-secondary hover:bg-secondary-fixed hover:text-on-secondary-fixed text-on-secondary py-3.5 px-space-md rounded-xl font-headline-sm text-headline-sm flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all group-hover:translate-x-0.5"
+                  href="#endowment"
+                >
+                  <span class="">المساهمة في الوقف ودعم المنصة</span>
+                  <span
+                    class="material-symbols-outlined text-[22px] transform group-hover:-translate-x-1 transition-transform"
+                    >arrow_left_alt</span
+                  >
+                </a>
+              </div>
+            </article>
+          </section>
+          <!-- COMPACT SUPPORT & ENDOWMENT BAR -->
+        </div>
+      </div>
+    </main>
+    <!-- Mobile Bottom Nav Dock (Small Screens Only) -->
+    <nav
+      class="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-surface/95 backdrop-blur-xl border-t border-surface-container-high h-16 flex items-center justify-around px-space-xs shadow-[0_-2px_12px_rgba(0,0,0,0.06)]"
+    >
+      <a
+        aria-current="page"
+        class="flex flex-col items-center gap-0.5 text-primary font-bold"
+        href="#"
+      >
+        <span
+          class="material-symbols-outlined text-[20px]"
+          style="font-variation-settings: &quot;FILL&quot; 1"
+          >grid_view</span
+        >
+        <span class="font-label-sm text-label-sm">البوابات</span>
+      </a>
+      </a>
+      <a
+        class="flex flex-col items-center gap-0.5 text-on-surface-variant hover:text-on-surface"
+        href="#raheem"
+      >
+        <span class="material-symbols-outlined text-[20px]">smart_toy</span>
+        <span class="font-label-sm text-label-sm">اسأل رحيم</span>
+      </a>
+      <a
+        class="flex flex-col items-center gap-0.5 text-on-surface-variant hover:text-on-surface"
+        href="#consultation"
+      >
+        <span class="material-symbols-outlined text-[20px]">support_agent</span>
+        <span class="font-label-sm text-label-sm">استشارة</span>
+      </a>
+      <a
+        class="flex flex-col items-center gap-0.5 text-secondary hover:text-primary"
+        href="#endowment"
+      >
+        <span class="material-symbols-outlined text-[20px]"
+          >volunteer_activism</span
+        >
+        <span class="font-label-sm text-label-sm">الوقف</span>
+      </a>
+    </nav>
+    <!-- Footer -->
+    <footer
+      class="w-full bg-surface-container-low text-on-surface border-t border-surface-container-high/60 py-space-lg mb-16 lg:mb-0"
+    >
+      <div
+        class="max-w-7xl mx-auto px-margin-mobile lg:px-margin flex flex-col md:flex-row items-center justify-between gap-space-md text-center md:text-right"
+      >
+        <div>
+          <div
+            class="flex items-center justify-center md:justify-start gap-2 mb-1"
+          >
+            <span
+              class="font-headline-sm text-headline-sm text-primary font-bold"
+              >من حب الله دل عليه</span
+            >
+          </div>
+          <p class="font-body-sm text-body-sm text-on-surface-variant">
+            منصة إسلامية معرفية تعنى بالبصيرة والتزكية ورعاية الفكر الراشد بنقاء
+            وأصالة.
+          </p>
+        </div>
+        <div
+          class="flex flex-wrap justify-center gap-space-md font-body-sm text-body-sm text-on-surface-variant"
+        >
+          <a class="hover:text-primary transition-colors" href="#"
+            >سياسة الخصوصية</a
+          >
+          <a class="hover:text-primary transition-colors" href="#"
+            >الهيئة العلمية</a
+          >
+          <a class="hover:text-primary transition-colors" href="#"
+            >المصادر</a
+          >
+          <a class="hover:text-primary transition-colors" href="#"
+            >تواصل معنا</a
+          >          
+          <a class="hover:text-primary transition-colors" href="#"
+            >ابلغ عن مشكلة</a
+          >
+        </div>
+        <div class="font-label-md text-label-md text-outline">
+          <p class="">
+                2027 م. جميع الحقوق محفوظة لكل من حب  الله فارد ان يدل عليه.
+          </p>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

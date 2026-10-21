@@ -5,12 +5,13 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Any
 from fastapi import Request, Response, HTTPException, status
 import loguru
+from loguru._logger import Logger
 
-from src.Infrastructure.Authentication.Schema.models import TokenPayload
-from pprint import pprint as pp
+from ..Schema.models import TokenPayload
+from ..utility import AuthenticationUtility
 
 class JWTHandler:
-    def __init__(self, logger: Optional[loguru.Logger] = None) -> None:
+    def __init__(self, logger: Optional[Logger] = None) -> None:
         self.secret_key = os.getenv("JWT_SECRET_KEY")
         if not self.secret_key:
             raise RuntimeError("JWT_SECRET_KEY environment variable is required")
@@ -23,12 +24,14 @@ class JWTHandler:
             os.getenv("JWT_REFRESH_TOKEN_EXPIRE_DAYS", "7")
         )
         self.issuer = os.getenv("APP_NAME")
-        self.audience = "SIGNING_IN"
+        if not self.issuer:
+            raise RuntimeError("APP_NAME is required for the JWT issuer claim")
+        self.audience = AuthenticationUtility.JWT_AUDIENCE
         self.cookie_secure = os.getenv("COOKIE_SECURE", "true").lower() == "true"
         self.logger = logger or loguru.logger
 
     @classmethod
-    async def init_class(cls, logger: Optional[loguru.Logger] = None) -> "JWTHandler":
+    async def init_class(cls, logger: Optional[Logger] = None) -> "JWTHandler":
         return cls(logger)
 
     # ─── Core Payload Builder ───
@@ -131,7 +134,7 @@ class JWTHandler:
             self.logger.warning(f"Token verification failed: {e}")
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail=f"Invalid token: {str(e)}",
+                detail="Invalid authentication token",
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
@@ -204,8 +207,10 @@ class JWTHandler:
         refresh_token: str,
     ) -> None:
         """Store tokens in HTTP-only cookies."""
+        if not isinstance(access_token, str) or not isinstance(refresh_token, str):
+            raise TypeError("Access and refresh tokens must be strings")
         response.set_cookie(
-            key="access_token",
+            key=AuthenticationUtility.ACCESS_COOKIE,
             value=access_token,
             httponly=True,
             secure=self.cookie_secure,
@@ -214,27 +219,27 @@ class JWTHandler:
             path="/",
         )
         response.set_cookie(
-            key="refresh_token",
+            key=AuthenticationUtility.REFRESH_COOKIE,
             value=refresh_token,
             httponly=True,
             secure=self.cookie_secure,
             samesite="lax",
             max_age=self.refresh_token_expire_days * 86400,
-            path="/auth/refresh",
+            path=AuthenticationUtility.REFRESH_COOKIE_PATH,
         )
         self.logger.debug("Auth cookies set on response")
 
     def clear_auth_cookies(self, response: Response) -> None:
         """Clear cookies on logout."""
-        response.delete_cookie("access_token", path="/")
-        response.delete_cookie("refresh_token", path="/auth/refresh")
+        response.delete_cookie(AuthenticationUtility.ACCESS_COOKIE, path="/")
+        response.delete_cookie(AuthenticationUtility.REFRESH_COOKIE, path=AuthenticationUtility.REFRESH_COOKIE_PATH)
         self.logger.debug("Auth cookies cleared")
 
     # ─── Request Extractors ───
 
     async def get_access_token_from_request(self, request: Request) -> str:
         """Extract access token from cookie or Authorization header."""
-        if token := request.cookies.get("access_token"):
+        if token := request.cookies.get(AuthenticationUtility.ACCESS_COOKIE):
             return token
 
         auth_header = request.headers.get("Authorization", "")
@@ -249,7 +254,7 @@ class JWTHandler:
 
     async def get_refresh_token_from_request(self, request: Request) -> str:
         """Extract refresh token from its dedicated cookie."""
-        if token := request.cookies.get("refresh_token"):
+        if token := request.cookies.get(AuthenticationUtility.REFRESH_COOKIE):
             return token
 
         raise HTTPException(

@@ -9,32 +9,19 @@ Version: 3.0.0
 
 import time
 import asyncio
-from functools import wraps
 from typing import Optional, Any, Callable
-from DatabaseInfrastructure.Interfaces.connection import ConnectionManagerInterface
+from .utility import retry
+from pymongo.errors import (ConnectionFailure as PyMongoConnectionError, ServerSelectionTimeoutError, NetworkTimeout, AutoReconnect)
 import loguru
-from functools import wraps
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
-from pymongo.errors import (
-    ConnectionFailure as PyMongoConnectionError,
-    ServerSelectionTimeoutError,
-    NetworkTimeout,
-    AutoReconnect,
-)
 
 
 # Errors we should retry (transient / network issues only)
 # DuplicateKeyError, BulkWriteError, and programming errors are NOT retried.
-RETRYABLE_ERRORS = (
-    PyMongoConnectionError,
-    ServerSelectionTimeoutError,
-    NetworkTimeout,
-    AutoReconnect,
-    ConnectionError,
-)
 
 
-class MongoConnectionManager(ConnectionManagerInterface):
+
+class MongoConnectionManager:
     """
     Production-grade async MongoDB connection manager using Motor.
 
@@ -129,7 +116,7 @@ class MongoConnectionManager(ConnectionManagerInterface):
             **kwargs: Extra connection parameters (max_pool_size, etc.).
 
         Returns:
-            MongoConnectionManager: Initialized instance (NOT yet connected).
+            MongoConnectionManager: Connected and verified instance.
 
         Raises:
             Exception: If initialization fails.
@@ -141,6 +128,8 @@ class MongoConnectionManager(ConnectionManagerInterface):
                             connect_timeout_ms,
                             socket_timeout_ms,
                             health_check_interval ,**kwargs)
+            if not await instance.connect():
+                raise ConnectionError("MongoDB connection initialization failed")
             return instance
         except Exception as e:
             loguru.logger.error(f"Failed to initialize MongoConnectionManager: {e}")
@@ -160,7 +149,10 @@ class MongoConnectionManager(ConnectionManagerInterface):
                 f"pool={self.min_pool_size}-{self.max_pool_size}"
             )
 
-            self.client = AsyncIOMotorClient(
+            if self.client is not None:
+                return await self.ensure_connected()
+
+            candidate = AsyncIOMotorClient(
                 self.url,
                 serverSelectionTimeoutMS=self.server_selection_timeout_ms,
                 connectTimeoutMS=self.connect_timeout_ms,
@@ -170,8 +162,13 @@ class MongoConnectionManager(ConnectionManagerInterface):
                 retryWrites=True,
             )
 
-            await self.client.admin.command("ping")
-            self.db = self.client[self.db_name]
+            try:
+                await candidate.admin.command("ping")
+            except Exception:
+                candidate.close()
+                raise
+            self.client = candidate
+            self.db = candidate[self.db_name]
             self._last_health_check = time.monotonic()
 
             self.logger.success(f"Connected to MongoDB | db='{self.db_name}'")
@@ -195,7 +192,7 @@ class MongoConnectionManager(ConnectionManagerInterface):
             bool: True on success or if already disconnected.
         """
         try:
-            if self.client:
+            if self.client is not None:
                 self.client.close()
                 self.client = None
                 self.db = None
@@ -242,7 +239,7 @@ class MongoConnectionManager(ConnectionManagerInterface):
             await self.client.admin.command("ping")
             self._last_health_check = now
             return True
-        except (PyMongoConnectionError, Exception) as e:
+        except Exception as e:
             self.logger.warning(
                 f"Health check failed ({type(e).__name__}), reconnecting..."
             )
@@ -261,94 +258,6 @@ class MongoConnectionManager(ConnectionManagerInterface):
         """Async context manager exit - closes connection."""
         await self.disconnect()
         return False
-    @staticmethod
-    def retry(
-        max_attempts: int = 3,
-        base_delay: float = 0.1,
-        max_delay: float = 5.0,
-        backoff_factor: float = 2.0,
-        exceptions: tuple = RETRYABLE_ERRORS,
-    ) -> Callable:
-        """
-        Retry decorator for async methods with exponential backoff.
-
-        Retries on transient errors (network, timeouts, auto-reconnects).
-        Does NOT retry on programming errors like DuplicateKeyError.
-
-        Between retries, attempts to reconnect via `self.conn.reconnect()`
-        (for DDL/DML classes) or `self.reconnect()` (for ConnectionManager itself).
-
-        Args:
-            max_attempts (int): Maximum retry attempts. Default 3.
-            base_delay (float): Initial delay in seconds. Default 0.1.
-            max_delay (float): Cap for exponential delay. Default 5.0.
-            backoff_factor (float): Multiplier for delay. Default 2.0.
-            exceptions (tuple): Exception types to retry. Default retryable errors.
-
-        Returns:
-            Callable: Decorator function.
-        """
-
-        def decorator(func: Callable) -> Callable:
-            @wraps(func)
-            async def wrapper(self, *args, **kwargs):
-                conn = getattr(self, "conn", None) or self
-                delay = base_delay
-                last_exception = None
-
-                for attempt in range(1, max_attempts + 1):
-                    try:
-                        return await func(self, *args, **kwargs)
-
-                    except exceptions as e:
-                        last_exception = e
-
-                        if attempt == max_attempts:
-                            # ✅ FIXED: raise directly, cleaner
-                            self.logger.error(
-                                f"[retry] {func.__name__} FAILED after "
-                                f"{max_attempts} attempts | {type(e).__name__}: {e}"
-                            )
-                            raise
-
-                        self.logger.warning(
-                            f"[retry] {func.__name__} attempt "
-                            f"{attempt}/{max_attempts} failed: {type(e).__name__}. "
-                            f"Retrying in {delay:.2f}s..."
-                        )
-
-                        # ✅ FIXED: try to reconnect before next attempt
-                        try:
-                            await conn.reconnect()
-                        except Exception as reconnect_err:
-                            self.logger.warning(
-                                f"[retry] reconnect failed: "
-                                f"{type(reconnect_err).__name__}: {reconnect_err}"
-                            )
-
-                        await asyncio.sleep(delay)
-                        delay = min(delay * backoff_factor, max_delay)
-
-                    except Exception as e:
-                        # Non-retryable error - re-raise immediately
-                        self.logger.error(
-                            f"Non-retryable error in {func.__name__}: "
-                            f"{type(e).__name__}: {e}",
-                            exc_info=True,
-                        )
-                        raise
-
-                # Safety net (should never reach here)
-                raise last_exception  # pragma: no cover
-
-            return wrapper
-
-        return decorator
 
 
 # Convenience alias for easy access: `from connection import retry`
-retry = MongoConnectionManager.retry
-
-
-
-

@@ -1,47 +1,40 @@
-from pydantic import BaseModel
-from typing import Optional
-from datetime import datetime
+"""JWT claims with Pydantic validation but without a class hierarchy."""
+from __future__ import annotations
+from dataclasses import fields
+from typing import Any
+from pydantic import ConfigDict, TypeAdapter, Field
+from pydantic.dataclasses import dataclass
 
 
+@dataclass(config=ConfigDict(extra="allow"))
+class TokenPayload:
+    """Validated JWT claims. Extra issuer/audience claims are preserved."""
+    sub: str = Field(description="Authenticated subject identifier")
+    email: str | None = None
+    name: str | None = None
+    picture_url: str | None = None
+    jti: str | None = None
+    type: str | None = None
+    family: str | None = None
+    iat: int | None = None
+    exp: int | None = None
 
-from typing import Optional, Any
-from pydantic import BaseModel, Field
+    def model_dump(self, *, exclude: set[str] | None = None) -> dict[str, Any]:
+        """Backward-compatible claim extraction for JWTHandler.
 
+        Unlike TypeAdapter.dump_python, preserve extra claims too.
+        """
+        omitted = exclude or set()
+        return {key: value for key, value in vars(self).items() if key not in omitted}
 
-class TokenPayload(BaseModel):
-    """JWT payload model. Used for both encoding (issuing) and decoding (verifying)."""
+    @classmethod
+    def model_validate(cls, payload: dict[str, Any]) -> "TokenPayload":
+        return TypeAdapter(cls).validate_python(payload)
 
-    # ─── Application Claims ───
-    sub: str = Field(description="Subject identifier, e.g. google_sub or user_id")
-    email: Optional[str] = Field(default=None, description="User email address")
-    name: Optional[str] = Field(default=None, description="Display name")
-    picture_url: Optional[str] = Field(default=None, description="Avatar / profile picture URL")
-
-    # ─── Standard JWT Claims (populated on decode, excluded on encode) ───
-    jti: Optional[str] = Field(default=None, description="JWT unique identifier")
-    type: Optional[str] = Field(default=None, description="Token type: access | refresh")
-    family: Optional[str] = Field(default=None, description="Refresh token family UUID")
-    iat: Optional[int] = Field(default=None, description="Issued at (Unix timestamp)")
-    exp: Optional[int] = Field(default=None, description="Expiration time (Unix timestamp)")
-
-    # Allow any extra claims (iss, aud, etc.) to pass through without validation errors
-    model_config = {"extra": "allow"}
+    @classmethod
+    def model_json_schema(cls) -> dict[str, Any]:
+        return TypeAdapter(cls).json_schema()
 
     @classmethod
     def from_payload(cls, payload: dict[str, Any]) -> "TokenPayload":
-        """Reconstruct from a decoded JWT dictionary (e.g. jwt.decode output)."""
-        return cls(
-            sub=payload.get("sub"),
-            email=payload.get("email"),
-            name=payload.get("name"),
-            picture_url=payload.get("picture_url"),
-            jti=payload.get("jti"),
-            type=payload.get("type"),
-            family=payload.get("family"),
-            iat=payload.get("iat"),
-            exp=payload.get("exp"),
-            **{k: v for k, v in payload.items() if k not in {
-                "sub", "email", "name", "picture_url",
-                "jti", "type", "family", "iat", "exp"
-            }},
-        )
+        return cls.model_validate(payload)

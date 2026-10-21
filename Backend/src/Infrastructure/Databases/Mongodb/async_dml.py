@@ -2,7 +2,7 @@
 Async MongoDB DML (Data Manipulation Language) operations.
 
 Handles CRUD operations: insert, get, update, delete, stream.
-All public operations (except async generators) are wrapped with @retry.
+Operations use @retry; automatic replays are enabled only for safe reads.
 
 Version: 3.0.0
 """
@@ -14,15 +14,15 @@ import loguru
 from pymongo import UpdateOne
 from pymongo.errors import DuplicateKeyError, BulkWriteError
 
-from .async_connection import MongoConnectionManager, retry
-from .mongo_utility import UpdateOperation
-from DatabaseInfrastructure.Interfaces.document_dml import DocumentInterfaceDML
+from .async_connection import MongoConnectionManager
+from .utility import retry
+from .utility import UpdateOperation
 
-class MongoDML(DocumentInterfaceDML):
+class MongoDML:
     """
     MongoDB DML operations - CRUD and data manipulation.
 
-    All operations wrapped with retry logic for transient failures.
+    Retry decorators on write operations default to a single attempt.
     Duplicate key errors are NOT retried (they're expected in scraping).
 
     Attributes:
@@ -77,10 +77,20 @@ class MongoDML(DocumentInterfaceDML):
             raise
 
     @property
-    def cleint(self):
-        if not self.conn:
-            raise ("Please Proivde Connection First") 
+    def client(self):
+        if self.conn.client is None:
+            raise RuntimeError("MongoDB connection is not initialized")
         return self.conn.client
+
+    @property
+    def db(self):
+        db = self.conn.db
+        if db is None:
+            raise RuntimeError("MongoDB connection is not initialized")
+        return db
+
+    # Backward-compatible alias for existing callers.
+    cleint = client
 
     # ==================== INSERT ====================
 
@@ -105,7 +115,7 @@ class MongoDML(DocumentInterfaceDML):
                 self.logger.error(
                     f"Not connected - insert into '{collection_name}' failed"
                 )
-                return None
+                raise ConnectionError("MongoDB connection unavailable")
 
             result = await self.db[collection_name].insert_one(document)
             self.logger.debug(
@@ -122,7 +132,7 @@ class MongoDML(DocumentInterfaceDML):
                 f"Insert error in '{collection_name}': {type(e).__name__}: {e}",
                 exc_info=True,
             )
-            return None
+            raise
 
     @retry()
     async def insert_many(
@@ -143,6 +153,8 @@ class MongoDML(DocumentInterfaceDML):
         Returns:
             Optional[List[Any]]: List of inserted _ids. None on critical failure.
         """
+        if batch_size <= 0:
+            raise ValueError("batch_size must be positive")
         if not documents:
             self.logger.debug(
                 f"insert_many skipped (empty) | collection='{collection_name}'"
@@ -154,7 +166,7 @@ class MongoDML(DocumentInterfaceDML):
                 self.logger.error(
                     f"insert_many aborted (not connected) | collection='{collection_name}'"
                 )
-                return None
+                raise ConnectionError("MongoDB connection unavailable")
 
             total_docs = len(documents)
             total_batches = (total_docs + batch_size - 1) // batch_size
@@ -199,12 +211,19 @@ class MongoDML(DocumentInterfaceDML):
                             batch_others += 1
                     duplicate_errors += batch_dups
                     other_errors += batch_others
+                    # PyMongo assigns _id to input dictionaries before the
+                    # server write; failed indexes are given by writeErrors.
+                    failed_indexes = {err["index"] for err in write_errors}
+                    inserted_ids.extend(
+                        doc["_id"] for idx, doc in enumerate(batch)
+                        if idx not in failed_indexes and "_id" in doc
+                    )
 
                     # Only log if there are NON-duplicate errors (real issues)
-                    if batch_others > 0:
+                    if batch_others > 0 or e.details.get("writeConcernErrors"):
                         sample = next(
                             (err for err in write_errors if err.get("code") != 11000),
-                            write_errors[0],
+                            write_errors[0] if write_errors else {},
                         )
                         self.logger.warning(
                             f"Batch {batch_num}/{total_batches} write errors | "
@@ -212,19 +231,17 @@ class MongoDML(DocumentInterfaceDML):
                             f"other={batch_others} | sample_code={sample.get('code')} | "
                             f"sample_msg={str(sample.get('errmsg', ''))[:100]}"
                         )
+                        raise
                     else:
                         self.logger.debug(
                             f"Batch {batch_num}/{total_batches} | "
                             f"inserted={batch_inserted} | duplicates={batch_dups}"
                         )
 
-                except Exception as e:
+                except Exception:
                     failed_batches += 1
-                    self.logger.error(
-                        f"Batch {batch_num}/{total_batches} failed | "
-                        f"{type(e).__name__}: {e}",
-                        exc_info=True,
-                    )
+                    self.logger.exception("MongoDB insert_many batch {} failed", batch_num)
+                    raise
 
             # ONE clear summary log
             duplicate_count = total_docs - inserted_count - other_errors
@@ -253,11 +270,11 @@ class MongoDML(DocumentInterfaceDML):
                 f"{type(e).__name__}: {e}",
                 exc_info=True,
             )
-            return None
+            raise
 
     # ==================== READ ====================
 
-    @retry()
+    @retry(max_attempts=3)
     async def get_one(
         self,
         collection_name: str,
@@ -280,7 +297,7 @@ class MongoDML(DocumentInterfaceDML):
                 self.logger.error(
                     f"Not connected - get_one from '{collection_name}' failed"
                 )
-                return None
+                raise ConnectionError("MongoDB connection unavailable")
 
             return await self.db[collection_name].find_one(query or {}, projection)
 
@@ -288,7 +305,7 @@ class MongoDML(DocumentInterfaceDML):
             self.logger.error(
                 f"get_one error: {type(e).__name__}: {e}", exc_info=True
             )
-            return None
+            raise
 
     async def stream_many_docs(
         self,
@@ -435,7 +452,7 @@ class MongoDML(DocumentInterfaceDML):
                 self.logger.error(
                     f"Not connected - cannot update '{collection_name}'"
                 )
-                return False
+                raise ConnectionError("MongoDB connection unavailable")
 
             result = await self.db[collection_name].update_one(
                 query, update, upsert=True
@@ -452,7 +469,7 @@ class MongoDML(DocumentInterfaceDML):
                 f"update_one error '{collection_name}': {type(e).__name__}: {e}",
                 exc_info=True,
             )
-            return False
+            raise
 
     @retry()
     async def update_many(
@@ -476,6 +493,8 @@ class MongoDML(DocumentInterfaceDML):
         Returns:
             bool: True if operation completed.
         """
+        if batch_size <= 0:
+            raise ValueError("batch_size must be positive")
         if not documents:
             self.logger.debug(
                 f"update_many skipped (empty) | collection='{collection_name}'"
@@ -487,7 +506,7 @@ class MongoDML(DocumentInterfaceDML):
                 self.logger.error(
                     f"Not connected - cannot update_many '{collection_name}'"
                 )
-                return False
+                raise ConnectionError("MongoDB connection unavailable")
 
             collection = self.db[collection_name]
             total_docs = len(documents)
@@ -549,14 +568,12 @@ class MongoDML(DocumentInterfaceDML):
                         f"Batch {batch_num}/{total_batches} bulk write errors="
                         f"{len(write_errors)}"
                     )
+                    raise
 
-                except Exception as e:
+                except Exception:
                     failed_batches += 1
-                    self.logger.error(
-                        f"Batch {batch_num}/{total_batches} failed | "
-                        f"{type(e).__name__}: {e}",
-                        exc_info=True,
-                    )
+                    self.logger.exception("MongoDB insert_many batch {} failed", batch_num)
+                    raise
 
             # One clear summary
             level = (
@@ -578,7 +595,7 @@ class MongoDML(DocumentInterfaceDML):
                 f"{type(e).__name__}: {e}",
                 exc_info=True,
             )
-            return False
+            raise
 
 
     # ==================== DELETE ====================
@@ -604,7 +621,7 @@ class MongoDML(DocumentInterfaceDML):
                 self.logger.error(
                     f"Not connected - delete_one from '{collection_name}' failed"
                 )
-                return False
+                raise ConnectionError("MongoDB connection unavailable")
 
             result = await self.db[collection_name].delete_one(query)
 
@@ -618,7 +635,7 @@ class MongoDML(DocumentInterfaceDML):
                 f"delete_one error '{collection_name}': {type(e).__name__}: {e}",
                 exc_info=True,
             )
-            return False
+            raise
 
     @retry()
     async def delete_many(
@@ -647,7 +664,7 @@ class MongoDML(DocumentInterfaceDML):
                 self.logger.error(
                     f"Not connected - delete_many from '{collection_name}' failed"
                 )
-                return None
+                raise ConnectionError("MongoDB connection unavailable")
 
             self.logger.info(
                 f"delete_many started | collection='{collection_name}'"
@@ -670,7 +687,7 @@ class MongoDML(DocumentInterfaceDML):
                 f"delete_many error '{collection_name}': {type(e).__name__}: {e}",
                 exc_info=True,
             )
-            return None
+            raise
 
 
     # ==================== HELPERS ====================

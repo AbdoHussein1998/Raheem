@@ -1,5 +1,6 @@
-"""Authentication HTTP endpoints and application-error translation."""
-from fastapi import APIRouter, Depends, HTTPException, Request, Response
+"""OAuth and refresh endpoints."""
+from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import JSONResponse
 
 from Dependencies.auth_dependency import get_auth_service
 from Services.Services.auth_service import AuthService, AuthServiceError
@@ -9,24 +10,26 @@ auth_router = APIRouter(prefix="/api/v1/auth", tags=["Auth", "Google"])
 
 
 def _auth_http_error(exc: AuthServiceError) -> HTTPException:
-    status = {
-        "invalid_identity": 400,
-        "email_unverified": 403,
-        "storage_failure": 503,
-    }.get(exc.code, 400)
-    return HTTPException(status_code=status, detail=exc.message)
+    return HTTPException(
+        status_code={
+            "invalid_identity": 400,
+            "email_unverified": 403,
+            "storage_failure": 503,
+        }.get(exc.code, 400),
+        detail=exc.message,
+    )
 
 
 @auth_router.get("/google/login", name="google_login")
 async def google_login(
-    request: Request, auth_service: AuthService = Depends(get_auth_service),
+    request: Request, auth_service: AuthService = Depends(get_auth_service)
 ):
     return await auth_service.redirect_to_google(request)
 
 
 @auth_router.get("/google/callback", name="google_callback")
 async def google_callback(
-    request: Request, auth_service: AuthService = Depends(get_auth_service),
+    request: Request, auth_service: AuthService = Depends(get_auth_service)
 ):
     try:
         data = await auth_service.receiving_from_google(request)
@@ -39,14 +42,21 @@ async def google_callback(
 
 @auth_router.post("/refresh")
 async def refresh_tokens(
-    request: Request,
-    response: Response,
-    auth_service: AuthService = Depends(get_auth_service),
+    request: Request, auth_service: AuthService = Depends(get_auth_service)
 ):
-    refresh_token = auth_service.jwt_handler.get_refresh_token_from_request(request=request)
-    tokens_data = await auth_service.jwt_handler.re_freshing_all_tokens(refresh_token)
-    auth_service.jwt_handler.set_auth_cookies(
+    jwt_handler = auth_service.jwt_handler
+    refresh_token = await jwt_handler.get_refresh_token_from_request(request=request)
+    tokens_data = await jwt_handler.rotate_tokens(refresh_token)
+    response = JSONResponse({
+        "token_type": tokens_data["token_type"],
+        "expires_in": tokens_data["expires_in"],
+        "message": "Tokens refreshed successfully",
+    })
+    jwt_handler.set_auth_cookies(
         response=response,
         access_token=tokens_data["access_token"],
         refresh_token=tokens_data["refresh_token"],
     )
+    # Existing JWTHandler rotates token values but does NOT persist old/new JTIs.
+    # Replay prevention requires a separate Services/Infrastructure change.
+    return response

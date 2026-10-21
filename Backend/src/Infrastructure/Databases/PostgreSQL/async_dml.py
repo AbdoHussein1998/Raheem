@@ -4,11 +4,10 @@ Async PostgreSQL Data Manipulation Layer (DML).
 
 PostgresDML — owns the async session factory, automap reflection cache,
 and all CRUD/query operations. Composes PostgresConnectionManager for
-engine access and inherits shared plumbing from PostgresComponentBase.
+engine access; shared SQL helpers are static utility functions.
 
 Changes from original:
-  • Inherits PostgresComponentBase (removes duplicated debug_statement,
-    __aenter__/__aexit__, logger setup).
+  • Uses composition and PostgresUtility for SQL diagnostics.
   • Inner try/except blocks now only perform rollback and re-raise;
     @retry() owns all exception-level logging.
   • Identifier validation added to public entrypoints for defense in depth.
@@ -33,11 +32,12 @@ from sqlalchemy.exc import IntegrityError, InterfaceError, OperationalError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy import Table
-from .async_connection import PostgresConnectionManager,retry
-from .post_utility import PostgresComponentBase ,validate_identifier
+from .async_connection import PostgresConnectionManager
+from .utility import retry, PostgresUtility
+from .utility import validate_identifier
 
 
-class PostgresDML(PostgresComponentBase):
+class PostgresDML:
     """
     Async PostgreSQL Data Manipulation Layer.
     Composes PostgresConnectionManager for engine access.
@@ -50,7 +50,8 @@ class PostgresDML(PostgresComponentBase):
         schema: str = "public",
         logger: Optional[Any] = None,
     ) -> None:
-        super().__init__(manager, logger)
+        self._manager = manager
+        self.logger = logger if logger is not None else loguru.logger
         self.default_schema = schema
         self._session_factory: Optional[async_sessionmaker[AsyncSession]] = None
         self._bases: Dict[str, Any] = {}
@@ -72,8 +73,7 @@ class PostgresDML(PostgresComponentBase):
     async def connect(self) -> None:
         self.logger.info("Connecting DML layer...")
         self._session_factory = self._build_async_session_factory()
-        await self._reflect_default_schema()
-        self.logger.info("DML layer connected and default schema reflected")
+        self.logger.info("DML layer ready; table reflection is lazy")
 
     async def close(self) -> None:
         """
@@ -89,7 +89,8 @@ class PostgresDML(PostgresComponentBase):
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
-        await super().__aexit__(exc_type, exc_val, exc_tb)
+        if exc_type:
+            self.logger.error("Error in PostgresDML context: {}", exc_val)
         try:
             await self.close()
         except Exception:
@@ -467,7 +468,7 @@ class PostgresDML(PostgresComponentBase):
                             f"Inserting batch {batch_num} ({len(batch)} rows) "
                             f"into '{table_name}'"
                         )
-                        self.debug_statement(
+                        PostgresUtility.debug_statement(self.logger, 
                             stmt=stmt,
                             operation="Bulk Insert",
                             table_name=table_name,
@@ -495,7 +496,7 @@ class PostgresDML(PostgresComponentBase):
                             f"Inserting batch {batch_num} ({len(batch)} rows) "
                             f"into '{table_name}'"
                         )
-                        self.debug_statement(
+                        PostgresUtility.debug_statement(self.logger, 
                             stmt=stmt,
                             operation="Bulk Insert",
                             table_name=table_name,
@@ -535,7 +536,7 @@ class PostgresDML(PostgresComponentBase):
                 await session.rollback()
                 raise
 
-    @retry()
+    @retry(max_attempts=3)
     async def get_table_data(
         self,
         table_name: str,

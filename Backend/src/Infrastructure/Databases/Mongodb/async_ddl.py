@@ -11,7 +11,8 @@ from typing import Optional, List, Any
 
 import loguru
 
-from .async_connection import MongoConnectionManager, retry
+from .async_connection import MongoConnectionManager
+from .utility import retry
 
 
 class MongoDDL:
@@ -28,7 +29,7 @@ class MongoDDL:
 
     def __init__(
         self,
-        connection: ConnectionManager,
+        connection: MongoConnectionManager,
         logger: Optional[Any] = None,
     ) -> None:
         """
@@ -49,7 +50,7 @@ class MongoDDL:
     @classmethod
     async def init_class(
         cls,
-        connection: ConnectionManager,
+        connection: MongoConnectionManager,
         logger: Optional[Any] = None,
     ) -> "MongoDDL":
         """
@@ -75,7 +76,10 @@ class MongoDDL:
     @property
     def db(self):
         """Shortcut to the current database instance."""
-        return self.conn.db
+        db = self.conn.db
+        if db is None:
+            raise RuntimeError("MongoDB connection is not initialized")
+        return db
 
     @retry()
     async def is_collection_existed(self, collection_name: str) -> bool:
@@ -91,7 +95,7 @@ class MongoDDL:
         try:
             if not await self.conn.ensure_connected():
                 self.logger.error(f"Not connected - cannot check '{collection_name}'")
-                return False
+                raise ConnectionError("MongoDB connection unavailable")
 
             collections = await self.db.list_collection_names()
             return collection_name in collections
@@ -101,7 +105,7 @@ class MongoDDL:
                 f"Error checking collection '{collection_name}': "
                 f"{type(e).__name__}: {e}"
             )
-            return False
+            raise
 
     @retry()
     async def create_collection(self, collection_name: str) -> bool:
@@ -117,7 +121,7 @@ class MongoDDL:
         try:
             if not await self.conn.ensure_connected():
                 self.logger.error(f"Not connected - cannot create '{collection_name}'")
-                return False
+                raise ConnectionError("MongoDB connection unavailable")
 
             collections = await self.db.list_collection_names()
             if collection_name in collections:
@@ -134,7 +138,7 @@ class MongoDDL:
                 f"{type(e).__name__}: {e}",
                 exc_info=True,
             )
-            return False
+            raise
 
     @retry()
     async def delete_collection(self, collection_name: str) -> bool:
@@ -150,7 +154,7 @@ class MongoDDL:
         try:
             if not await self.conn.ensure_connected():
                 self.logger.error(f"Not connected - cannot delete '{collection_name}'")
-                return False
+                raise ConnectionError("MongoDB connection unavailable")
 
             if not await self.is_collection_existed(collection_name):
                 self.logger.warning(
@@ -168,7 +172,7 @@ class MongoDDL:
                 f"{type(e).__name__}: {e}",
                 exc_info=True,
             )
-            return False
+            raise
 
     @retry()
     async def create_index(self,collection_name: str,fields: List[tuple],index_name: str = None,unique: bool = False,sparse: bool = False,
@@ -192,7 +196,7 @@ class MongoDDL:
                 self.logger.error(
                     f"Not connected - cannot create index on '{collection_name}'"
                 )
-                return False
+                raise ConnectionError("MongoDB connection unavailable")
 
             if not await self.is_collection_existed(collection_name):
                 self.logger.warning(
@@ -225,7 +229,7 @@ class MongoDDL:
                 f"{type(e).__name__}: {e}",
                 exc_info=True,
             )
-            return False
+            raise
 
 
         

@@ -11,7 +11,12 @@ celery_app=Celery(
     main="ScaleableAiProject", # the name of the celery appluiction 
     broker_url=settings.CELERY_BROKER_URL, # the connection url to borker used by celery
     result_backend=settings.CELERY_RESULT_BACKEND, # the connection url to the backend used by celery to store results
-    broker_pool_limit=settings.CELERY_BROKER_CONNECTUIONS_POOL,                      # Limit the number of active connections to the broker
+    broker_pool_limit=settings.CELERY_BROKER_CONNECTUIONS_POOL,
+    include=[
+        "Celery.Tasks.welcome_task",
+        "Celery.Tasks.parse_pdf_task",
+        "Celery.Tasks.clean_conversion_task",
+    ],                      # Limit the number of active connections to the broker
     
     # Serialization & Security Whitelist
     task_serializer="json",       # Outbound format for task arguments sent by clients
