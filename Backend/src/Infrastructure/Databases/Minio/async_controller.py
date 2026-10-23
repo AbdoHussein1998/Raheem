@@ -217,7 +217,7 @@ class AsyncMinioController:
 
         await self._execute(
             "upload_file",
-            self.client.fput_object,
+            self.client.fupload_object,
             bucket_name,
             object_name,
             file_path,
@@ -245,7 +245,7 @@ class AsyncMinioController:
 
         await self._execute(
             "download_file",
-            self.client.fget_object,
+            self.client.fdownload_object,
             bucket_name,
             object_name,
             destination_path,
@@ -258,12 +258,7 @@ class AsyncMinioController:
             destination_path,
         )
 
-    async def put_object(
-        self,
-        bucket_name: str,
-        object_name: str,
-        data: BinaryIO,
-        length: int,
+    async def upload_object(self,bucket_name: str,object_name: str,data: BinaryIO,length: int,
     ) -> None:
         self.logger.info(
             "Uploading stream to MinIO object '{}/{}' ({} bytes)",
@@ -273,12 +268,9 @@ class AsyncMinioController:
         )
 
         await self._execute(
-            "put_object",
-            self.client.put_object,
-            bucket_name,
-            object_name,
-            data,
-            length,
+            "upload_object",
+            self.client.put_object,bucket_name,object_name,
+            data,length,
         )
 
         self.logger.success(
@@ -289,7 +281,7 @@ class AsyncMinioController:
         )
 
     @retry(max_attempts=3)
-    async def get_object(
+    async def download_object(
         self,
         bucket_name: str,
         object_name: str,
@@ -313,7 +305,7 @@ class AsyncMinioController:
                 response.release_conn()
 
         data = await self._execute(
-            "get_object",
+            "download_object",
             read_object,
         )
 
@@ -438,7 +430,7 @@ class AsyncMinioController:
     # ==========================================
 
     @retry(max_attempts=3)
-    async def get_object_metadata(
+    async def download_object_metadata(
         self,
         bucket_name: str,
         object_name: str,
@@ -450,7 +442,7 @@ class AsyncMinioController:
         )
 
         result = await self._execute(
-            "get_object_metadata",
+            "download_object_metadata",
             self.client.stat_object,
             bucket_name,
             object_name,

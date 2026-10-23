@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import JSONResponse
 
 from Dependencies.validation_dependency import get_validation_service
-from Services.Services.validation_service import ValidationService
+from Services.Endpoints.validation_service import ValidationService
 from Celery.Config.celery_defination import celery_app
 
 basic_client_router = APIRouter(prefix="/api/v1/client", tags=["Client"])

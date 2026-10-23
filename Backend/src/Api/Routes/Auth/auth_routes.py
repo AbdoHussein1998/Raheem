@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse
 
 from Dependencies.auth_dependency import get_auth_service
-from Services.Services.auth_service import AuthService, AuthServiceError
+from Services.Endpoints.auth_service import AuthService, AuthServiceError
 
 
 auth_router = APIRouter(prefix="/api/v1/auth", tags=["Auth", "Google"])

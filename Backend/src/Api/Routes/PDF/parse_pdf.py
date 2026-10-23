@@ -1,41 +1,53 @@
-"""Authenticated PDF parsing into the configured MinIO bucket."""
-from fastapi import APIRouter, File, HTTPException, UploadFile, status
+from __future__ import annotations
+
+from fastapi import APIRouter, Depends, File, UploadFile, status
+from Dependencies.parse_books_dependency import get_pdf_parser_service
+from Celery.Tasks.parse_pdf_task import parse_pdf_task 
+from Services.Endpoints.parse_pdf_service import ParsePDFBooks
+from Services.Endpoints.validation_service import ValidationService
 from fastapi.responses import JSONResponse
-from Celery.Tasks.parse_pdf_task import parse_easy_pdf_task, parse_ocr_pdf_task
+from Dependencies.validation_dependency import get_validation_service
+
+pdf_router = APIRouter(
+    prefix="/api/v1/pdf",
+    tags=["PDF"],
+)
 
 
+# ==========================================
+# Easy PDF Endpoint
+# ==========================================
 
-pdf_router = APIRouter(prefix="/api/v1/pdf", tags=["PDF"])
+@pdf_router.post(
+    "/parse_easy/",
+    status_code=status.HTTP_202_ACCEPTED,
+)
+async def parse_easy_pdf(
+    file: UploadFile = File(...),
+    service: ParsePDFBooks = Depends(get_pdf_parser_service),
+    validator: ValidationService = Depends(get_validation_service)
+) -> dict:
+
+    await  validator.validate_pdf(file=file,size=25)
+    #################################
+    # Processing the Normal Method 
+    #################################
+    object_key=await service.run(file=file,bucket_name="parse-easy")
 
 
-@pdf_router.post("/parse_easy/", status_code=status.HTTP_201_CREATED)
-async def parse_pdf(file: UploadFile = File(...),):
-    if not file.filename.lower().endswith(".pdf"):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Uploaded file is not a PDF",
-        )
-    parsing_task = parse_easy_pdf_task.delay(file, bucket_name="easy-pdf-bucket")
-    return JSONResponse(
-        status_code=status.HTTP_202_ACCEPTED,
-        content={
-            "message": "PDF parsing task has been initiated.",
-            "task_id": parsing_task.id,
-        },
+    # ==========================================
+    # OCR PDF Endpoint
+    # ==========================================
+    task = parse_pdf_task.delay(
+        bucket_name="parse-easy",
+        object_key=object_key,
+        using_ocr=False,
     )
 
-@pdf_router.post("/parse_ocr/", status_code=status.HTTP_201_CREATED)
-async def parse_ocr_pdf(file: UploadFile = File(...),):
-    if not file.filename.lower().endswith(".pdf"):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Uploaded file is not a PDF",
-        )
-    parsing_task = parse_ocr_pdf_task.delay(file, bucket_name="ocr-pdf-bucket")
+
+
     return JSONResponse(
+        content={"message": "File parsed successfully", "task_id": task.id},
         status_code=status.HTTP_202_ACCEPTED,
-        content={
-            "message": "PDF parsing task has been initiated.",
-            "task_id": parsing_task.id,
-        },
+        headers={"Task-ID": task.id}
     )

@@ -30,12 +30,12 @@ class ApplicationServices:
             return
         managers = [
             ("mongo", self.mongo),
-            ("redis", self.redis),
+            # ("redis", self.redis),
             ("postgres", self.postgres),
             ("minio", self.minio),
         ]
-        if self.settings.ENABLE_LLM:
-            managers.append(("llm", self.llm))
+        # if self.settings.ENABLE_LLM:
+        #     managers.append(("llm", self.llm))
 
         try:
             for name, manager in managers:

@@ -1,16 +1,23 @@
 """FastAPI factory, route registration, middleware, and application lifespan."""
 from __future__ import annotations
-
 import os
 from contextlib import asynccontextmanager
-
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from starlette.middleware.sessions import SessionMiddleware
+load_dotenv()
 
 from Infrastructure.Logging.start import LoggerManager
 from .api_services import ApplicationServices
 from .api_settings import get_basic_settings
+
+# Imports occur after dotenv loading: auth SDKs read configuration on init.
+from Api.Routes.Auth.auth_routes import auth_router
+from Api.Routes.Client.basic_client_routes import basic_client_router
+from Api.Routes.PDF.parse_pdf import pdf_router
+
+
+
 
 
 def create_lifespan(logger_manager: LoggerManager):
@@ -25,6 +32,7 @@ def create_lifespan(logger_manager: LoggerManager):
             logger_manager=logger_manager,
         )
         app.state.services = services
+        print(app.state.services.minio.omni_minio_conn)
         try:
             await services.startup()
             yield
@@ -38,8 +46,7 @@ def create_lifespan(logger_manager: LoggerManager):
 
 
 def create_app(*, logger_manager: LoggerManager | None = None) -> FastAPI:
-    load_dotenv("src/.env")
-    load_dotenv()
+
     manager = logger_manager or LoggerManager()
     if logger_manager is None:
         manager.configure_logger(level=os.getenv("LOG_LEVEL", "INFO"))
@@ -48,12 +55,9 @@ def create_app(*, logger_manager: LoggerManager | None = None) -> FastAPI:
     if not secret_key:
         raise RuntimeError("MIDDLEWARE_SECRET_KEY is required for OAuth sessions")
 
-    # Imports occur after dotenv loading: auth SDKs read configuration on init.
-    from Api.Routes.Auth.auth_routes import auth_router
-    from Api.Routes.Client.basic_client_routes import basic_client_router
-    from Api.Routes.PDF.parse_pdf import pdf_router
+  
 
-    app = FastAPI(lifespan=create_lifespan(manager))
+    app = FastAPI(lifespan=create_lifespan(manager),docs_url="/docs")
     app.include_router(basic_client_router)
     app.include_router(auth_router)
     app.include_router(pdf_router)

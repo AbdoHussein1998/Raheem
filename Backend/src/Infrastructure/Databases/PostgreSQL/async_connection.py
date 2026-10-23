@@ -108,6 +108,7 @@ class PostgresConnectionManager:
         async with self._reconnect_lock:
             if self._engine is not None:
                 return
+            
             self.logger.info("Connecting PostgresConnectionManager...")
             engine = self._build_engine(self.username, self.password, self.database)
             try:
@@ -219,6 +220,7 @@ class PostgresConnectionManager:
             f"postgresql+asyncpg://{quote_plus(username)}:{quote_plus(password)}"
             f"@{self.host}:{self.port}/{database}"
         )
+        self.logger.debug(f"Building AsyncEngine for URL: {url}")
         return create_async_engine(
             url,
             echo=self.echo,

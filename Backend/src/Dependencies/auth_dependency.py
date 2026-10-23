@@ -3,7 +3,7 @@ from collections.abc import AsyncIterator
 
 from fastapi import Depends, HTTPException, status
 
-from Services.Services.auth_service import AuthService
+from Services.Endpoints.auth_service import AuthService
 from Infrastructure.Authentication.Providers.google_oauth_provider import GoogleOAuthHandler
 from Infrastructure.Authentication.Providers.jwt_services_provider import JWTHandler
 from Infrastructure.Databases.PostgreSQL.async_dml import PostgresDML

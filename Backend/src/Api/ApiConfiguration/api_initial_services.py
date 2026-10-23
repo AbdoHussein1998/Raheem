@@ -56,11 +56,7 @@ class PostgresManager:
             username=settings.OMNI_POSTGRES_USER,
             password=settings.OMNI_POSTGRES_PASSWORD,
             database=settings.OMNI_POSTGRES_DB,
-            pool_size=settings.OMNI_POSTGRES_POOL_SIZE,
-            max_overflow=settings.OMNI_POSTGRES_MAX_OVERFLOW,
-            pool_timeout=settings.OMNI_POSTGRES_POOL_TIMEOUT,
-            pool_recycle=settings.OMNI_POSTGRES_POOL_RECYCLE,
-            echo=settings.OMNI_POSTGRES_ECHO,
+
             logger=self.get_logger("omni_postgres"),
         )
 

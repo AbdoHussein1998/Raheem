@@ -2,7 +2,7 @@
 from fastapi import Depends, HTTPException, Request, status
 
 from Api.ApiConfiguration.api_services import ApplicationServices
-from Services.Services.validation_service import ValidationService
+from Services.Endpoints.validation_service import ValidationService
 from .app_dependency import get_app_services
 
 
