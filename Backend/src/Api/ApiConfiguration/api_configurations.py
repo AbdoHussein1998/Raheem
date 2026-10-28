@@ -32,7 +32,6 @@ def create_lifespan(logger_manager: LoggerManager):
             logger_manager=logger_manager,
         )
         app.state.services = services
-        print(app.state.services.minio.omni_minio_conn)
         try:
             await services.startup()
             yield

@@ -16,7 +16,7 @@ from docling.datamodel.pipeline_options import PdfPipelineOptions
 from docling.document_converter import DocumentConverter, PdfFormatOption
 from docling.datamodel.base_models import DocumentStream
 from docling.datamodel.document import ConversionStatus
-
+from Infrastructure.Databases.PostgreSQL.async_dml import PostgresDML
 
 class EnqueueParsePDF:
     """Execute (not enqueue) a PDF processing job; name kept by design request."""
@@ -29,6 +29,7 @@ class EnqueueParsePDF:
         self.logger = logger or default_logger
         self.lake_controller:AsyncMinioController = lake_controller
         self.converter = None
+        self.dml:PostgresDML
 
     @classmethod
     async def init_service(
@@ -72,6 +73,7 @@ class EnqueueParsePDF:
                 bucket_name=bucket_name,
                 object_name=object_key,
             )
+            self.__register(hashed_name=hashed_name,status="progress")
             return pdf_object
         except Exception as e :
             self.logger.error(f"Error: Downloading the pdf {e} ")
@@ -111,6 +113,18 @@ class EnqueueParsePDF:
             data=BytesIO(data),
             length=len(data),
         )
+
+    # ==========================================
+    # Register
+    # ==========================================
+    async def __register(self,hashed_name:str, status:str):
+       
+        updates={"status":status}
+        condition={"hased_name":hashed_name}
+        await self.dml.update_table(
+            schema="processing_catalog",
+            table_name="pdfs_progress",
+            condition=condition,updates=updates)
 
     # ==========================================
     # RUN The Pipeline

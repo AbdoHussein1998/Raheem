@@ -1,6 +1,7 @@
 """ASGI entry point."""
+from dotenv import load_dotenv
+load_dotenv()
 from Api.ApiConfiguration.api_configurations import create_app
-
 app = create_app()
 
 if __name__ == "__main__":
