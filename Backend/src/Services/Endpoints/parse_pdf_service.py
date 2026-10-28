@@ -94,131 +94,6 @@ class ParsePDFBooks:
 
 
 
-    async def register_file(self, file_name: str, object_key: str) -> bool:
-        """
-        Register a file in files_main and initialize its processing status
-        in pdfs_progress.
-
-        Returns:
-            bool: True if both database insertions succeed.
-
-        Raises:
-            HTTPException: If registration fails.
-        """
-
-        
-
-        self.logger.info(
-            "Starting file registration | file_name=%s | object_key=%s",
-            file_name,
-            object_key,
-        )
-
-        try:
-            # Generate a consistent hash for file identification.
-            hashed_name = hashlib.sha256(
-                file_name.lower().strip().encode("utf-8")
-            ).hexdigest()
-
-            self.logger.debug(
-                "Generated file hash | file_name=%s | hashed_name=%s",
-                file_name,
-                hashed_name,
-            )
-
-            files_main = {
-                "file_name": file_name,
-                "object_key": object_key,
-                "hashed_name": hashed_name,
-            }
-
-            pdfs_progress = {
-                "hashed_name": hashed_name,
-                "status": "pending",
-            }
-
-            # Step 1: Register file metadata.
-            self.logger.info(
-                "Inserting file metadata | table=processing_catalog.files_main "
-                "| hashed_name=%s",
-                hashed_name,
-            )
-
-            case_1 = await self.dml.insert_into_table(
-                table_name="files_main",
-                schema="processing_catalog",
-                data=files_main,
-            )
-
-            if not case_1:
-                self.logger.error(
-                    "File metadata insertion failed | table=files_main "
-                    "| file_name=%s | hashed_name=%s",
-                    file_name,
-                    hashed_name,
-                )
-                raise RuntimeError("Failed to insert file metadata.")
-
-            self.logger.success(
-                "File metadata inserted successfully | table=files_main "
-                "| file_name=%s | hashed_name=%s",
-                file_name,
-                hashed_name,
-            )
-
-            # Step 2: Initialize PDF processing status.
-            self.logger.info(
-                "Initializing PDF processing status | table=pdfs_progress "
-                "| status=pending | hashed_name=%s",
-                hashed_name,
-            )
-
-            case_2 = await self.dml.insert_into_table(
-                table_name="pdfs_progress",
-                schema="processing_catalog",
-                data=pdfs_progress,
-            )
-
-            if not case_2:
-                self.logger.error(
-                    "PDF progress initialization failed | table=pdfs_progress "
-                    "| file_name=%s | hashed_name=%s",
-                    file_name,
-                    hashed_name,
-                )
-                raise RuntimeError("Failed to initialize PDF processing status.")
-
-            self.logger.success(
-                "PDF processing status initialized successfully "
-                "| table=pdfs_progress | file_name=%s | status=pending",
-                file_name,
-            )
-
-            self.logger.success(
-                "File registration completed successfully | file_name=%s "
-                "| object_key=%s | hashed_name=%s",
-                file_name,
-                object_key,
-                hashed_name,
-            )
-
-            return True
-
-        except Exception as exc:
-            self.logger.exception(
-                "File registration failed | file_name=%s | object_key=%s "
-                "| error_type=%s | error=%s",
-                file_name,
-                object_key,
-                type(exc).__name__,
-                str(exc),
-            )
-
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to register the uploaded file.",
-            ) from exc
-
     # ==========================================
     # Run The Pipeline
     # ==========================================
@@ -251,6 +126,89 @@ class ParsePDFBooks:
         )
 
         return object_key
+
+
+    async def register_file(self, file_name: str, object_key: str) -> bool:
+        """
+        Register file metadata and initialize PDF processing status.
+
+        Returns:
+            bool: True if both insertions succeed, otherwise False.
+        """
+
+        hashed_name = hashlib.sha256(
+            file_name.lower().strip().encode("utf-8")
+        ).hexdigest()
+
+        self.logger.info(
+            "Starting file registration | file_name=%s | hashed_name=%s",
+            file_name,
+            hashed_name,
+        )
+
+        files_main = {
+            "file_name": file_name,
+            "object_key": object_key,
+            "hashed_name": hashed_name,
+        }
+
+        pdfs_progress = {
+            "hashed_name": hashed_name,
+            "status": "pending",
+        }
+
+        files_main_success = False
+        pdfs_progress_success = False
+
+        # Process 1: Insert into files_main.
+        try:
+            files_main_success = await self.dml.insert_into_table(
+                table_name="files_main",
+                schema="processing_catalog",
+                data=files_main,
+            )
+
+        except Exception as exc:
+            self.logger.error(
+                "Failed to insert file metadata | file_name=%s | error=%s",
+                file_name,
+                str(exc),
+            )
+
+        if not files_main_success:
+            self.logger.error(
+                "File metadata insertion failed | table=files_main | "
+                "file_name=%s | hashed_name=%s",
+                file_name,
+                hashed_name,
+            )
+
+        
+        # Process 2: Insert into pdfs_progress.
+        try:
+            pdfs_progress_success = await self.dml.insert_into_table(
+                table_name="pdfs_progress",
+                schema="processing_catalog",
+                data=pdfs_progress,
+            )
+
+            if pdfs_progress_success:
+                self.logger.success(
+                    "PDF progress initialized successfully | "
+                    "table=pdfs_progress | file_name=%s | "
+                    "hashed_name=%s | status=pending",
+                    file_name,
+                    hashed_name,
+                )
+
+        except Exception:
+            pdfs_progress_success = False
+
+        return files_main_success or pdfs_progress_success
+
+
+
+
 
 
 
