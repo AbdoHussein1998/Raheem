@@ -1,4 +1,4 @@
-"""Validated runtime configuration shared by API and Celery."""
+"""Validated runtime configuration shared by API and Temporal workers."""
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -27,9 +27,18 @@ class ApplicationBasicSettings(BaseSettings):
     OMNI_MINIO_PDF_BUCKET: str | None = None
     # OMNI_PDF_MAX_UPLOAD_BYTES: int = 25 * 1024 * 1024
 
-    CELERY_BROKER_URL: str
-    CELERY_RESULT_BACKEND: str
-    CELERY_BROKER_CONNECTUIONS_POOL: int
+    # Retained temporarily for existing welcome Celery endpoint.
+    CELERY_BROKER_URL: str | None = None
+    CELERY_RESULT_BACKEND: str | None = None
+    CELERY_BROKER_CONNECTUIONS_POOL: int = 10
+
+    TEMPORAL_ADDRESS: str = "localhost:7233"
+    TEMPORAL_NAMESPACE: str = "default"
+    TEMPORAL_PDF_TASK_QUEUE: str = "pdf-processing"
+    TEMPORAL_TLS: bool = False
+    TEMPORAL_API_KEY: str | None = None
+    TEMPORAL_MAX_PDF_CONVERSIONS: int = 1
+    OMNI_PDF_MAX_UPLOAD_BYTES: int = 60 * 1024 * 1024
 
     JWT_SECRET_KEY: str
     JWT_HASHING_ALGORITHM: str

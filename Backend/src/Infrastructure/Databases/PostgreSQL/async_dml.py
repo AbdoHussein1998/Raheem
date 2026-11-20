@@ -21,7 +21,7 @@ Changes from original:
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Union, cast
+from typing import Any, Dict, List, Mapping, Optional, Union, cast
 
 import loguru
 import pandas as pd
@@ -267,6 +267,31 @@ class PostgresDML:
             raise ValueError(
                 f"Table '{table_name}' not found in schema '{schema}'"
             )
+
+    @staticmethod
+    def _apply_conditions(stmt: Any, model: Any, conditions: Optional[dict]) -> Any:
+        """Build bound equality predicates, NULL checks, or IN predicates.
+
+        Lists and tuples are treated as membership constraints. The caller
+        cannot inject SQL identifiers: every column must exist on the model.
+        """
+        for field, value in (conditions or {}).items():
+            if field not in model.__table__.columns:
+                raise ValueError(f"Unknown condition column {field!r}")
+            column = getattr(model, field)
+            if isinstance(value, (tuple, list, set, frozenset)):
+                stmt = stmt.where(column.in_(value))
+            elif value is None:
+                stmt = stmt.where(column.is_(None))
+            else:
+                stmt = stmt.where(column == value)
+        return stmt
+
+    @staticmethod
+    def _extract_execution_result(result: Any) -> list[dict] | int:
+        if result.returns_rows:
+            return [dict(row) for row in result.mappings().all()]
+        return max(result.rowcount or 0, 0)
 
     # ─── Private Helpers ────────────────────────────────────────────────────
     def _build_insert_stmt(
@@ -524,14 +549,22 @@ class PostgresDML:
         return total_inserted
 
     @retry()
-    async def execute_custom_statement(self, stmt) -> None:
+    async def execute_custom_statement(
+        self, stmt: Any, params: Mapping[str, Any] | None = None,
+    ) -> list[dict] | int:
+        """Run a parameterized statement within this method's own transaction.
+
+        SELECT/RETURNING returns list[dict]; other statements return rowcount.
+        SQLAlchemy text(...) and Core statements are supported.
+        """
+        if isinstance(stmt, str):
+            stmt = text(stmt)
         async with self.session() as session:
             try:
-                # Downgraded to DEBUG to avoid leaking sensitive data in prod logs.
-                self.logger.debug(f"Executing custom statement: {stmt}")
-                await session.execute(stmt)
+                result = await session.execute(stmt, dict(params or {}))
+                extracted = self._extract_execution_result(result)
                 await session.commit()
-                self.logger.debug("Custom statement executed successfully")
+                return extracted
             except Exception:
                 await session.rollback()
                 raise
@@ -544,67 +577,51 @@ class PostgresDML:
         limit: int = 100,
         order_by: Optional[str] = None,
         ascending: Optional[bool] = True,
+        conditions: dict | None = None,
+    ) -> List[Any]:
+        """Read reflected rows with optional equality / IN / NULL filtering."""
+        async with self.session() as session:
+            return await self._get_table_data_with_session(
+                session, table_name, schema, limit, order_by, ascending,
+                conditions=conditions,
+            )
+
+    async def _get_table_data_with_session(
+        self, session: AsyncSession, table_name: str,
+        schema: Optional[str], limit: int, order_by: Optional[str],
+        ascending: Optional[bool], conditions: dict | None,
+        *, for_update: bool = False,
     ) -> List[Any]:
         validate_identifier(table_name, label="table_name")
         if schema:
             validate_identifier(schema, label="schema")
-
+        if limit < 1:
+            raise ValueError("limit must be positive")
         model = await self.get_table_model(table_name, schema)
-        stmt = select(model)
-
+        stmt = self._apply_conditions(select(model), model, conditions)
         if order_by:
-            if not hasattr(model, order_by):
-                raise ValueError(
-                    f"Order by field '{order_by}' not found in table '{table_name}'"
-                )
-            if ascending:
-                stmt = stmt.order_by(getattr(model, order_by).asc())
-            else:
-                stmt = stmt.order_by(getattr(model, order_by).desc())
+            if order_by not in model.__table__.columns:
+                raise ValueError(f"Unknown order column {order_by!r}")
+            order_column = getattr(model, order_by)
+            stmt = stmt.order_by(order_column.asc() if ascending else order_column.desc())
+        if for_update:
+            stmt = stmt.with_for_update()
+        result = await session.execute(stmt.limit(limit))
+        return list(result.scalars().all())
 
-        stmt = stmt.limit(limit)
-
-        self.logger.info(
-            f"Executing query on table {schema or self.default_schema}.{table_name}"
-        )
-
-        async with self.session() as session:
-            result = await session.execute(stmt)
-            rows = result.scalars().all()
-            self.logger.info(
-                f"Fetched {len(rows)} row(s) from table '{table_name}'"
-            )
-            return rows
-
-    # ─── Static Converters ──────────────────────────────────────────────────
     @staticmethod
     def from_sqlalchemy_to_pandas(rows: List[Any]) -> "pd.DataFrame":
         if not rows:
             return pd.DataFrame()
-
         return pd.DataFrame([
-            {
-                column.name: getattr(row, column.name)
-                for column in row.__table__.columns
-            }
+            {column.name: getattr(row, column.name) for column in row.__table__.columns}
             for row in rows
         ])
 
     @staticmethod
     def from_sqlalchemy_to_json(rows: List[Any]) -> List[dict]:
-        if not rows:
-            return []
-
         return [
-            {
-                column.name: getattr(row, column.name)
-                for column in row.__table__.columns
-            }
+            {column.name: getattr(row, column.name) for column in row.__table__.columns}
             for row in rows
         ]
 
-
-
-
-
-    

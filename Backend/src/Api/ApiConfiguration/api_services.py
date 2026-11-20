@@ -9,6 +9,7 @@ from .api_initial_services import (
     RedisManager,
     MinioManager,
     LLMManager,
+    TemporalManager,
 )
 from .api_settings import ApplicationBasicSettings
 
@@ -23,6 +24,7 @@ class ApplicationServices:
         self.postgres = PostgresManager(logger_manager)
         self.minio = MinioManager(logger_manager)
         self.llm = LLMManager(logger_manager)
+        self.temporal = TemporalManager(logger_manager)
         self._started: list[tuple[str, Any]] = []
 
     async def startup(self) -> None:
@@ -44,6 +46,13 @@ class ApplicationServices:
                 # generation succeeds but embedding initialization fails).
                 self._started.append((name, manager))
                 await manager.connect(self.settings)
+            # Optional for API availability: registration still works when
+            # Temporal is down; the processing dependency retries lazily.
+            self._started.append(("temporal", self.temporal))
+            try:
+                await self.temporal.connect(self.settings)
+            except Exception:
+                self.logger.warning("Temporal unavailable at startup; PDF registration remains available")
         except BaseException:
             await self.shutdown()
             raise

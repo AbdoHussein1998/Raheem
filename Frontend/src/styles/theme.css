@@ -1,0 +1,250 @@
+/*
+ * Page-only campaign themes. No image processing, backend calls, or output image
+ * pixels are changed here. The shared layout supplies data-celebration-theme.
+ */
+.celebration-shell {
+  position: relative;
+  isolation: isolate;
+}
+
+/* ----- Shared ambient particles: visually above the content, never interactive ----- */
+.theme-atmosphere {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 40;
+}
+
+.theme-particle {
+  position: absolute;
+  display: block;
+  border-radius: 999px;
+  will-change: transform, opacity;
+  pointer-events: none;
+}
+
+.theme-atmosphere--christmas .theme-particle {
+  background: radial-gradient(circle at 30% 30%, #fff 0%, #e7f7ff 45%, #b9dcf0 100%);
+  box-shadow: 0 0 7px 1px rgb(223 245 255 / 28%);
+  animation: snow-fall linear infinite;
+}
+
+@keyframes snow-fall {
+  0% {
+    transform: translate3d(0, -8vh, 0);
+    opacity: 0;
+  }
+  8% { opacity: var(--particle-opacity); }
+  88% { opacity: var(--particle-opacity); }
+  100% {
+    transform: translate3d(var(--particle-drift), 112vh, 0);
+    opacity: 0;
+  }
+}
+
+.theme-atmosphere--pharaonic .theme-particle {
+  left: -8% !important;
+  border-radius: 48%;
+  background: #e8c083;
+  box-shadow: 0 0 7px 1px rgb(239 181 92 / 42%);
+  animation: sand-drift linear infinite;
+}
+
+.theme-atmosphere--pharaonic::before {
+  content: "";
+  position: absolute;
+  inset: 45% 0 0;
+  background: linear-gradient(to top, rgb(190 124 51 / 12%), transparent 65%);
+}
+
+@keyframes sand-drift {
+  0% {
+    transform: translate3d(0, 0, 0);
+    opacity: 0;
+  }
+  10% { opacity: var(--particle-opacity); }
+  85% { opacity: var(--particle-opacity); }
+  100% {
+    transform: translate3d(115vw, var(--particle-drift), 0);
+    opacity: 0;
+  }
+}
+
+/* ----- Pharaonic hero: reusable decorative illustration ----- */
+.hero-desert-art {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.hero-desert-art svg {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 230px;
+}
+
+.hero-desert-sun {
+  position: absolute;
+  width: min(38vw, 360px);
+  aspect-ratio: 1;
+  left: 65%;
+  top: -28%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgb(255 221 151 / 55%) 0%, rgb(231 157 65 / 28%) 35%, transparent 72%);
+  filter: blur(9px);
+}
+
+/*
+ * The existing Tailwind design token configuration is not included in the
+ * uploaded src archive. Explicit selectors below let the alternate theme work
+ * without touching the project's Tailwind configuration.
+ */
+.celebration-shell[data-celebration-theme="pharaonic"] {
+  --desert-page: #24180f;
+  --desert-surface: #34271d;
+  --desert-low: #2a1e16;
+  --desert-high: #463224;
+  --desert-outline: #806044;
+  --desert-text: #fff2d7;
+  --desert-muted: #d5bd9c;
+  --desert-gold: #f3c36e;
+  --desert-teal: #82d6c5;
+  background-color: var(--desert-page);
+  color: var(--desert-text);
+}
+
+.celebration-shell[data-celebration-theme="pharaonic"] main {
+  background: radial-gradient(ellipse at 76% 0%, rgb(142 89 35 / 24%), transparent 48%),
+    linear-gradient(165deg, #2b2018 0%, #201710 63%, #322217 100%);
+}
+
+.celebration-shell[data-celebration-theme="pharaonic"] .theme-header {
+  background: rgb(34 24 16 / 94%);
+  border-color: rgb(198 142 74 / 33%);
+  box-shadow: 0 1px 18px rgb(9 6 3 / 38%);
+}
+
+.celebration-shell[data-celebration-theme="pharaonic"] .theme-logo-tile {
+  background: #563921;
+  border-color: #b78a4b;
+  box-shadow: 0 0 14px rgb(232 173 83 / 20%);
+}
+
+.celebration-shell[data-celebration-theme="pharaonic"] .theme-footer {
+  background: #1c140e;
+  border-color: #674e37;
+}
+
+.celebration-shell[data-celebration-theme="pharaonic"] .theme-hero {
+  min-height: 350px;
+  background: radial-gradient(ellipse at 74% 37%, rgb(186 128 49 / 22%), transparent 48%);
+}
+
+.celebration-shell[data-celebration-theme="pharaonic"] .theme-hero-glow {
+  opacity: 0.18;
+}
+
+.celebration-shell[data-celebration-theme="pharaonic"] .theme-hero-label {
+  background: rgb(52 35 22 / 88%);
+  border-color: rgb(218 163 83 / 60%);
+  box-shadow: 0 0 28px rgb(214 147 61 / 14%);
+}
+
+.celebration-shell[data-celebration-theme="pharaonic"] .theme-hero-emphasis {
+  background-image: linear-gradient(95deg, #f8d899 5%, #c98e42 53%, #f3d5a0 100%);
+}
+
+.celebration-shell[data-celebration-theme="pharaonic"] .theme-card {
+  background: linear-gradient(160deg, #3a2b20, #2e2118);
+  border-color: rgb(191 139 77 / 35%);
+  box-shadow: 0 12px 38px rgb(13 7 2 / 30%);
+}
+
+.celebration-shell[data-celebration-theme="pharaonic"] :is(.bg-surface-container, .bg-surface-container\/60) {
+  background-color: var(--desert-surface);
+}
+
+.celebration-shell[data-celebration-theme="pharaonic"] :is(.bg-surface-container-low, .bg-surface-container-lowest, .bg-surface-container-lowest\/80, .bg-surface-container-lowest\/85, .bg-surface-container-lowest\/90) {
+  background-color: var(--desert-low);
+}
+
+.celebration-shell[data-celebration-theme="pharaonic"] :is(.bg-surface-container-high, .bg-surface-container-high\/90, .bg-surface-container-highest, .bg-surface-bright) {
+  background-color: var(--desert-high);
+}
+
+.celebration-shell[data-celebration-theme="pharaonic"] :is(.bg-surface-variant, .bg-surface-variant\/40, .bg-surface-variant\/70) {
+  background-color: #765438;
+}
+
+.celebration-shell[data-celebration-theme="pharaonic"] :is(.text-on-surface, .text-on-primary-container) {
+  color: var(--desert-text);
+}
+
+.celebration-shell[data-celebration-theme="pharaonic"] :is(.text-on-surface-variant, .text-outline) {
+  color: var(--desert-muted);
+}
+
+.celebration-shell[data-celebration-theme="pharaonic"] .text-primary {
+  color: var(--desert-gold);
+}
+
+.celebration-shell[data-celebration-theme="pharaonic"] .text-secondary {
+  color: var(--desert-teal);
+}
+
+.celebration-shell[data-celebration-theme="pharaonic"] :is(.border-surface-container, .border-surface-container-high, .border-surface-container-high\/60, .border-surface-container-highest, .border-outline-variant\/60) {
+  border-color: var(--desert-outline);
+}
+
+.celebration-shell[data-celebration-theme="pharaonic"] :is(.border-primary, .border-primary\/20, .border-primary\/30, .border-secondary\/30) {
+  border-color: var(--desert-gold);
+}
+
+.celebration-shell[data-celebration-theme="pharaonic"] .theme-select {
+  background-color: #251a13;
+  border-color: #967046;
+  color: var(--desert-text);
+}
+
+.celebration-shell[data-celebration-theme="pharaonic"] .theme-select:focus-visible {
+  outline: 2px solid var(--desert-gold);
+  outline-offset: 3px;
+}
+
+.celebration-shell[data-celebration-theme="pharaonic"] #drop-zone {
+  background-color: #2a1e15;
+  border-color: #957049;
+}
+
+.celebration-shell[data-celebration-theme="pharaonic"] #drop-zone:hover,
+.celebration-shell[data-celebration-theme="pharaonic"] #drop-zone.is-dragging {
+  background-color: #463321;
+  border-color: var(--desert-gold);
+}
+
+.celebration-shell[data-celebration-theme="pharaonic"] :is(.theme-main-action, .theme-download-action) {
+  background: linear-gradient(100deg, #d79f50, #f7d28a 48%, #b97d34);
+  color: #28180b;
+  box-shadow: 0 6px 20px rgb(218 159 77 / 23%);
+}
+
+.celebration-shell[data-celebration-theme="pharaonic"] :is(.theme-main-action, .theme-download-action):hover:not(:disabled) {
+  box-shadow: 0 7px 24px rgb(238 187 106 / 36%);
+}
+
+.celebration-shell[data-celebration-theme="pharaonic"] :is(button, a, input, select):focus-visible {
+  outline-color: var(--desert-gold);
+}
+
+/* Users requesting reduced motion get neither falling snow nor moving sand. */
+@media (prefers-reduced-motion: reduce) {
+  .theme-particle {
+    display: none;
+    animation: none !important;
+  }
+}

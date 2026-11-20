@@ -20,7 +20,7 @@ class ValidationService:
     ) -> None:
         self.jwt: Optional[JWTHandler] = jwt_handler
         self.logger = logger or loguru.logger
-        self.max_pdf_mg=25 
+        self.max_pdf_mb = 25 
 
     @classmethod
     async def init_service(

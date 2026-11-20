@@ -1,0 +1,11 @@
+.git/
+**/__pycache__/
+**/*.pyc
+.pytest_cache/
+deployment-secrets/
+deployment-models/
+deployment-fixtures/
+*.env
+*.env.*
+!env/*.env.example
+/target/

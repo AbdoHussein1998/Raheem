@@ -75,27 +75,27 @@ services:
       - raheem_network
 
   rabbitmq:
-      image: rabbitmq:4.3.4-management
-      restart: unless-stopped
-      hostname: raheem-rabbitmq
-      environment:
-        RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:?Set RABBITMQ_USER in .env}
-        RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:?Set RABBITMQ_PASSWORD in .env}
-        RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_VHOST:-raheem}
-      ports:
-        - "127.0.0.1:${RABBITMQ_PORT:-5672}:5672"
-        - "127.0.0.1:${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
-      volumes:
-        - rabbitmq_data:/var/lib/rabbitmq
-        - ./rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro  # <-- ADD THIS LINE
-      healthcheck:
-        test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
-        interval: 15s
-        timeout: 10s
-        retries: 5
-        start_period: 30s
-      networks:
-        - raheem_network
+    image: rabbitmq:4.3.4-management
+    restart: unless-stopped
+    hostname: raheem-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:?Set RABBITMQ_USER in .env}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:?Set RABBITMQ_PASSWORD in .env}
+      RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_VHOST:-raheem}
+    ports:
+      - "127.0.0.1:${RABBITMQ_PORT:-5672}:5672"
+      - "127.0.0.1:${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+      - ./rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - raheem_network
 
   minio:
     image: pgsty/minio:RELEASE.2026-08-04T00-00-00Z
@@ -118,6 +118,24 @@ services:
     networks:
       - raheem_network
 
+  temporal:
+    image: temporalio/temporal:latest
+    restart: unless-stopped
+    command:
+      - server
+      - start-dev
+      - --ip
+      - 0.0.0.0
+      - --db-filename
+      - /home/temporal/temporal.db
+    ports:
+      - "127.0.0.1:${TEMPORAL_PORT:-7233}:7233"
+      - "127.0.0.1:${TEMPORAL_UI_PORT:-8233}:8233"
+    volumes:
+      - temporal_data:/home/temporal
+    networks:
+      - raheem_network
+
 networks:
   raheem_network:
     driver: bridge
@@ -129,3 +147,4 @@ volumes:
   redis_data:
   rabbitmq_data:
   minio_data:
+  temporal_data:

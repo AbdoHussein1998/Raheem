@@ -6,6 +6,7 @@ inherit from a service base class nor create resources on import.
 from __future__ import annotations
 
 import inspect
+import asyncio
 from typing import Any
 
 from Infrastructure.Logging.start import LoggerManager
@@ -14,6 +15,8 @@ from Infrastructure.Databases.Mongodb.async_connection import MongoConnectionMan
 from Infrastructure.Databases.PostgreSQL.async_connection import PostgresConnectionManager
 from Infrastructure.Databases.Redis.async_connection import RedisConnectionManager
 from Infrastructure.Databases.Minio.async_conncetion import AsyncMinioConnectionManger
+from Infrastructure.Databases.PostgreSQL.async_dml import PostgresDML
+from Infrastructure.Temporal.async_connection import TemporalConnectionManager
 
 from .api_settings import ApplicationBasicSettings
 
@@ -46,6 +49,7 @@ class PostgresManager:
         self.get_logger = logger_manager.get_logger
         self.logger = self.get_logger("PostgresManager")
         self.omni_postgres_conn: PostgresConnectionManager | None = None
+        self.omni_postgres_dml: PostgresDML | None = None
 
     async def connect(self, settings: ApplicationBasicSettings) -> None:
         if self.omni_postgres_conn is not None:
@@ -59,8 +63,16 @@ class PostgresManager:
 
             logger=self.get_logger("omni_postgres"),
         )
+        self.omni_postgres_dml = await PostgresDML.init_class(
+            manager=self.omni_postgres_conn,
+            schema="processing_catalog",
+            logger=self.get_logger("omni_postgres_dml"),
+        )
 
     async def disconnect(self) -> None:
+        dml, self.omni_postgres_dml = self.omni_postgres_dml, None
+        if dml is not None:
+            await dml.close()
         connection, self.omni_postgres_conn = self.omni_postgres_conn, None
         if connection is not None:
             await connection.disconnect()
@@ -165,3 +177,64 @@ class LLMManager:
                         await result
                 except Exception:
                     self.logger.exception("Failed to close {} model", attribute)
+
+
+class TemporalManager:
+    """Application-scoped registry of independent named Temporal connections.
+
+    The default `omni` connection mirrors the existing Mongo/Postgres naming.
+    Additional connections are created using connect_named(...) with their own
+    namespaces and credentials; they are not new worker processes.
+    """
+
+    def __init__(self, logger_manager: LoggerManager) -> None:
+        self.logger_manager = logger_manager
+        self.get_logger = logger_manager.get_logger
+        self.logger = self.get_logger("TemporalManager")
+        self.omni_temporal_conn: TemporalConnectionManager | None = None
+        self.connections: dict[str, TemporalConnectionManager] = {}
+        self._lock = asyncio.Lock()
+
+    async def connect(self, settings: ApplicationBasicSettings) -> None:
+        connection = await self.connect_named(
+            name="omni", address=settings.TEMPORAL_ADDRESS,
+            namespace=settings.TEMPORAL_NAMESPACE,
+            tls=settings.TEMPORAL_TLS, api_key=settings.TEMPORAL_API_KEY,
+        )
+        self.omni_temporal_conn = connection
+
+    async def connect_named(
+        self, name: str, address: str, namespace: str = "default", *,
+        tls: bool = False, api_key: str | None = None,
+    ) -> TemporalConnectionManager:
+        if not name.strip():
+            raise ValueError("Temporal connection name cannot be empty")
+        async with self._lock:
+            if name in self.connections:
+                existing = self.connections[name]
+                if (existing.address, existing.namespace, existing.tls, existing.api_key) != (address, namespace, tls, api_key):
+                    raise ValueError(f"Temporal connection {name!r} already has different settings")
+                await existing.connect()
+                return existing
+            conn = await TemporalConnectionManager.init_class(
+                address=address, namespace=namespace, tls=tls, api_key=api_key,
+                logger=self.get_logger(f"temporal_{name}"),
+            )
+            self.connections[name] = conn
+            if name == "omni":
+                self.omni_temporal_conn = conn
+            return conn
+
+    def get_connection(self, name: str = "omni") -> TemporalConnectionManager:
+        connection = self.connections.get(name)
+        if connection is None:
+            raise RuntimeError(f"Temporal connection {name!r} is unavailable")
+        return connection
+
+    async def disconnect(self) -> None:
+        async with self._lock:
+            connections = list(self.connections.values())
+            self.connections.clear()
+            self.omni_temporal_conn = None
+            for connection in connections:
+                await connection.disconnect()
