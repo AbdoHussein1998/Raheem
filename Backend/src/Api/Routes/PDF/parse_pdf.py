@@ -5,62 +5,71 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Path, UploadFile, status
 from temporalio.client import Client, RPCError, RPCStatusCode
 from temporalio.common import WorkflowIDConflictPolicy, WorkflowIDReusePolicy
-
+from fastapi.responses import JSONResponse
 from Api.ApiConfiguration.api_services import ApplicationServices
 from Dependencies.app_dependency import get_app_services
 from Dependencies.temporal_dependency import get_omni_temporal_client
 from Dependencies.validation_dependency import get_validation_service
+from Dependencies.pdf_regiesteration_dependcey import get_pdf_registtrantion_service
 from Infrastructure.Databases.Minio.async_controller import AsyncMinioController
 from Services.Endpoints.pdf_registration import (
     PDFAlreadyExistsError,
     PDFRegistration,
     PDFTooLargeError,
     InvalidPDFError,
+    PDFNotReady,
+    PDFNotFound
 )
 from Services.Endpoints.validation_service import ValidationService
+from Services.Endpoints.pdf_registration import PDFRegistration
+from .schema import RegisterFile
 
 
 
-pdf_router = APIRouter(prefix="/api/v1/pdfs", tags=["PDF"])
+pdf_router = APIRouter(prefix="/pdfs", tags=["PDF"])
 DocumentID = Annotated[str, Path(pattern=r"^[0-9a-f]{64}$")]
 
 
 @pdf_router.post("/upload", status_code=status.HTTP_201_CREATED)
 async def register_pdf(
-    file: UploadFile = File(...),
-    ocr: bool = Form(False),
+    payload:RegisterFile=Depends(),
     services: ApplicationServices = Depends(get_app_services),
     validator: ValidationService = Depends(get_validation_service),
+    registration:PDFRegistration=Depends(get_pdf_registtrantion_service)
 ) -> dict:
-    await validator.validate_pdf(
-        file=file,
-        size=services.settings.OMNI_PDF_MAX_UPLOAD_BYTES / (1024 * 1024),
-    )
+    #-----------------------------------
+    # extract the payload to the correct name 
+    #-----------------------------------
+    file=payload.file
+    ocr=payload.ocr
+    force=payload.force
+
+    
+    #-----------------------------------
+    # Validation
+    #-----------------------------------
+    await validator.validate_pdf(file=file,size=services.settings.OMNI_PDF_MAX_UPLOAD_BYTES / (1024 * 1024),)
 
     if services.minio.omni_minio_conn is None:
-        raise HTTPException(status_code=503, detail="MinIO is unavailable")
-
-    dml = services.postgres.omni_postgres_dml
+        raise HTTPException(status_code=503, detail="MinIO Connection is unavailable")
+   
+    dml = services.postgres.omni_postgres_conn
     if dml is None:
-        raise HTTPException(status_code=503, detail="PostgreSQL is unavailable")
-
-    lake = await AsyncMinioController.init_class(
-        connection_manager=services.minio.omni_minio_conn,
-        logger=services.logger_manager.get_logger("PDFRegistrationMinIO"),
-    )
-    registration = PDFRegistration(
-        postgres_dml=dml,
-        lake_controller=lake,
-        max_upload_bytes=services.settings.OMNI_PDF_MAX_UPLOAD_BYTES,
-        logger=services.logger_manager.get_logger("PDFRegistration"),
-    )
+        raise HTTPException(status_code=503, detail="PostgreSQL Connection is unavailable")
 
     try:
-        return await registration.run(
+        bucket_name= "easy-parse" if not ocr else "ocr-parse"
+        content= await registration.run(
             file=file,
-            bucket_name=services.settings.OMNI_MINIO_PDF_BUCKET or "parse-easy",
+            bucket_name=bucket_name,
             ocr=ocr,
+            force=force
         )
+        return JSONResponse(
+            content=content,
+            status_code=status.HTTP_201_CREATED
+        )
+    
     except PDFAlreadyExistsError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
     except InvalidPDFError as exc:
@@ -69,25 +78,39 @@ async def register_pdf(
         raise HTTPException(status_code=413, detail=str(exc)) from exc
 
 
+
+
+
+
+
+
 @pdf_router.post("/parse", status_code=status.HTTP_202_ACCEPTED)
-async def parse_pdf(document_id: str,temporal_client: Client = Depends(get_omni_temporal_client),
+async def parse_pdf(document_id: str=Form(...),
+                    registration:PDFRegistration=Depends(get_pdf_registtrantion_service),
+                    temporal_client: Client = Depends(get_omni_temporal_client),
                     services: ApplicationServices = Depends(get_app_services),
 ) -> dict:
-    dml = services.postgres.omni_postgres_dml
+
+    #------------
+    # Valdition of the connecition
+    #---------
+    
+    dml = services.postgres.omni_postgres_conn
     if dml is None:
-        raise HTTPException(status_code=503, detail="PostgreSQL is unavailable")
+        raise HTTPException(status_code=503, detail="PostgreSQL Connection is unavailable")
 
-    rows = await dml.get_table_data(
-        table_name="pdf_index",
-        schema="processing_catalog",
-        conditions={"hashed_name": document_id},
-        limit=1,
-    )
-    if not rows:
-        raise HTTPException(status_code=404, detail="PDF not found")
-    if rows[0].registration_status not in ("ready", "completed"):
-        raise HTTPException(status_code=409, detail="PDF registration is not ready")
+    
+    try:
+        rows = await registration.get_file_row(document_id=document_id)
 
+    except PDFNotFound:
+        raise HTTPException(
+            status_code=404,
+            detail="PDF not found"
+        )
+
+    except PDFNotReady:
+        raise HTTPException(status_code=409,detail="PDF registration is not ready")
     workflow_id = f"pdf-processing-{document_id}"
     try:
         handle = await temporal_client.start_workflow(
@@ -98,6 +121,7 @@ async def parse_pdf(document_id: str,temporal_client: Client = Depends(get_omni_
             id_conflict_policy=WorkflowIDConflictPolicy.USE_EXISTING,
             id_reuse_policy=WorkflowIDReusePolicy.ALLOW_DUPLICATE,
         )
+
     except Exception as exc:
         raise HTTPException(
             status_code=503,
@@ -110,6 +134,17 @@ async def parse_pdf(document_id: str,temporal_client: Client = Depends(get_omni_
         "using_ocr": rows[0].ocr_required,
         "status": "accepted",
     }
+
+
+
+
+
+
+
+
+
+
+
 
 @pdf_router.get("/{document_id}/metadata/")
 async def get_pdf_metadata(

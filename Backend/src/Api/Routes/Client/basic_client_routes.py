@@ -5,7 +5,7 @@ from fastapi.responses import JSONResponse
 from Dependencies.validation_dependency import get_validation_service
 from Services.Endpoints.validation_service import ValidationService
 
-basic_client_router = APIRouter(prefix="/api/v1/client", tags=["Client"])
+basic_client_router = APIRouter(prefix="/client", tags=["Client"])
 
 
 @basic_client_router.post("/", status_code=status.HTTP_202_ACCEPTED)

@@ -6,7 +6,7 @@ from Dependencies.auth_dependency import get_auth_service
 from Services.Endpoints.auth_service import AuthService, AuthServiceError
 
 
-auth_router = APIRouter(prefix="/api/v1/auth", tags=["Auth", "Google"])
+auth_router = APIRouter(prefix="/auth", tags=["Auth", "Google"])
 
 
 def _auth_http_error(exc: AuthServiceError) -> HTTPException:

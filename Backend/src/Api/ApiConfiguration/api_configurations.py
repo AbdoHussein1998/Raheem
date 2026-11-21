@@ -16,7 +16,7 @@ from Api.Routes.Auth.auth_routes import auth_router
 from Api.Routes.Client.basic_client_routes import basic_client_router
 from Api.Routes.PDF.parse_pdf import pdf_router
 
-
+APPLICTION_API_PREFIX="/api/v1"
 
 
 
@@ -57,9 +57,9 @@ def create_app(*, logger_manager: LoggerManager | None = None) -> FastAPI:
   
 
     app = FastAPI(lifespan=create_lifespan(manager),docs_url="/docs")
-    app.include_router(basic_client_router)
-    app.include_router(auth_router)
-    app.include_router(pdf_router)
+    app.include_router(basic_client_router,prefix=APPLICTION_API_PREFIX)
+    app.include_router(auth_router,prefix=APPLICTION_API_PREFIX)
+    app.include_router(pdf_router,prefix=APPLICTION_API_PREFIX)
     app.add_middleware(
         SessionMiddleware,
         secret_key=secret_key,

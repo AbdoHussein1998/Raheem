@@ -49,7 +49,6 @@ class PostgresManager:
         self.get_logger = logger_manager.get_logger
         self.logger = self.get_logger("PostgresManager")
         self.omni_postgres_conn: PostgresConnectionManager | None = None
-        self.omni_postgres_dml: PostgresDML | None = None
 
     async def connect(self, settings: ApplicationBasicSettings) -> None:
         if self.omni_postgres_conn is not None:
@@ -63,16 +62,9 @@ class PostgresManager:
 
             logger=self.get_logger("omni_postgres"),
         )
-        self.omni_postgres_dml = await PostgresDML.init_class(
-            manager=self.omni_postgres_conn,
-            schema="processing_catalog",
-            logger=self.get_logger("omni_postgres_dml"),
-        )
+
 
     async def disconnect(self) -> None:
-        dml, self.omni_postgres_dml = self.omni_postgres_dml, None
-        if dml is not None:
-            await dml.close()
         connection, self.omni_postgres_conn = self.omni_postgres_conn, None
         if connection is not None:
             await connection.disconnect()
